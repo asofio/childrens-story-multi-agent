@@ -4,17 +4,16 @@ main.py — FastAPI application entry point.
 Endpoints:
   GET  /api/health              — health check
   POST /api/generate-story      — runs the story workflow; streams SSE progress events
+  POST /api/tts                 — synthesizes speech from text; streams audio/mpeg chunks
 """
 
 import asyncio
-import io
 import json
 import logging
 from typing import AsyncGenerator
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
@@ -22,6 +21,7 @@ from .config import settings
 from .models import StoryRequest, StoryResponse
 from .workflow import build_story_workflow
 from .events import ProgressDetailEvent
+from .tts import TTSService, TTSRequest
 
 try:
     from agent_framework import (
@@ -220,174 +220,16 @@ async def _story_event_generator(
 
 # ─── Text-to-Speech (TTS) ─────────────────────────────────────────────────────
 
-try:
-    import azure.cognitiveservices.speech as speechsdk
-    _SPEECH_SDK_AVAILABLE = True
-except ImportError:
-    _SPEECH_SDK_AVAILABLE = False
-
-from azure.identity import DefaultAzureCredential
-_credential = DefaultAzureCredential()
-
-SPEECH_REGION      = settings.azure_speech_region
-SPEECH_RESOURCE_ID = settings.azure_speech_resource_id
-SPEECH_ENDPOINT    = settings.azure_speech_endpoint
-
-TTS_VOICE = "en-US-Ava:DragonHDLatestNeural"
-
-
-def _get_auth_token() -> str:
-    """
-    Fetch an AAD access token and format it for the Speech SDK.
-    The SDK expects:  aad#<resource_id>#<token>
-    """
-    token = _credential.get_token("https://cognitiveservices.azure.com/.default")
-    return f"aad#{SPEECH_RESOURCE_ID}#{token.token}"
-
-
-def _make_speech_config() -> "speechsdk.SpeechConfig":
-    """Build a SpeechConfig using AAD token auth.
-
-    Uses the configured SPEECH_ENDPOINT (HTTPS) or falls back to the standard
-    regional WSS host.  The websocket/v2 endpoint is only needed when streaming
-    text INPUT into TTS; for streaming audio OUTPUT via PushAudioOutputStream
-    the standard endpoint works and avoids v2 auth timeout issues.
-    """
-    if SPEECH_ENDPOINT:
-        config = speechsdk.SpeechConfig(endpoint=SPEECH_ENDPOINT)
-    else:
-        config = speechsdk.SpeechConfig(
-            host=f"wss://{SPEECH_REGION}.tts.speech.microsoft.com"
-        )
-    config.authorization_token = _get_auth_token()
-    return config
-
-
-if _SPEECH_SDK_AVAILABLE:
-    class _TTSStreamCallback(speechsdk.audio.PushAudioOutputStreamCallback):
-        """Bridges SDK audio push-stream chunks into an asyncio.Queue.
-
-        The SDK calls write() on its own thread for each audio chunk and
-        close() when synthesis completes.  We safely hand these over to the
-        asyncio event loop via call_soon_threadsafe.
-        """
-
-        def __init__(
-            self,
-            queue: asyncio.Queue,
-            loop: asyncio.AbstractEventLoop,
-        ) -> None:
-            super().__init__()
-            self._queue = queue
-            self._loop  = loop
-
-        def write(self, audio_buffer: memoryview) -> int:
-            self._loop.call_soon_threadsafe(
-                self._queue.put_nowait, bytes(audio_buffer)
-            )
-            return len(audio_buffer)
-
-        def close(self) -> None:
-            # None is the sentinel that tells the async generator to stop
-            logger.info("[TTS] PushAudioOutputStream close() called")
-            self._loop.call_soon_threadsafe(self._queue.put_nowait, None)
-
-
-class TTSRequest(BaseModel):
-    text: str
+_tts = TTSService()
 
 
 @app.post("/api/tts")
 async def text_to_speech(req: TTSRequest):
-    """
-    Synthesize speech from text using Azure AI Speech Service with
-    DefaultAzureCredential AAD token auth and the en-US-Ava:DragonHDLatestNeural voice.
-    Streams audio/mpeg chunks to the client as synthesis progresses so playback
-    can begin before the full audio is ready.
-    """
+    """Synthesize speech and stream audio/mpeg chunks to the client."""
     if not req.text or not req.text.strip():
         raise HTTPException(status_code=400, detail="Text is required.")
-
-    if not SPEECH_REGION and not SPEECH_ENDPOINT:
-        raise HTTPException(
-            status_code=503,
-            detail="Azure Speech Service is not configured. Set AZURE_SPEECH_REGION or AZURE_SPEECH_ENDPOINT.",
-        )
-
-    if not SPEECH_RESOURCE_ID:
-        raise HTTPException(
-            status_code=503,
-            detail="Azure Speech Service is not configured. Set AZURE_SPEECH_RESOURCE_ID.",
-        )
-
-    if not _SPEECH_SDK_AVAILABLE:
-        raise HTTPException(
-            status_code=503,
-            detail="azure-cognitiveservices-speech package is not installed.",
-        )
-
-    speech_config = _make_speech_config()
-    speech_config.set_speech_synthesis_output_format(
-        speechsdk.SpeechSynthesisOutputFormat.Audio24Khz48KBitRateMonoMp3
-    )
-    speech_config.speech_synthesis_voice_name = TTS_VOICE
-
-    loop  = asyncio.get_running_loop()
-    queue: asyncio.Queue = asyncio.Queue()
-
-    # PushAudioOutputStream + callback: the SDK calls write() per audio chunk on
-    # its own thread and close() when done — both safely enqueue onto the asyncio loop.
-    callback    = _TTSStreamCallback(queue, loop)
-    push_stream = speechsdk.audio.PushAudioOutputStream(callback)
-    audio_cfg   = speechsdk.audio.AudioOutputConfig(stream=push_stream)
-    synthesizer = speechsdk.SpeechSynthesizer(
-        speech_config=speech_config, audio_config=audio_cfg
-    )
-
-    # Wire up cancellation errors so they surface in the stream
-    def on_canceled(evt):
-        details = evt.result.cancellation_details
-        logger.error(
-            "[TTS] Synthesis canceled: %s — %s", details.reason, details.error_details
-        )
-        loop.call_soon_threadsafe(
-            queue.put_nowait,
-            RuntimeError(f"Speech synthesis failed: {details.error_details}"),
-        )
-
-    # Belt-and-suspenders: push the None sentinel when synthesis completes.
-    # The PushAudioOutputStreamCallback.close() *should* do this, but some
-    # SDK versions only fire close() reliably when the result future is
-    # consumed via .get().  This event is the authoritative "all audio has
-    # been written" signal and ensures the HTTP response body always closes.
-    def on_completed(evt):
-        logger.info("[TTS] synthesis_completed event fired — closing audio stream")
-        loop.call_soon_threadsafe(queue.put_nowait, None)
-
-    synthesizer.synthesis_completed.connect(on_completed)
-    synthesizer.synthesis_canceled.connect(on_canceled)
-    synthesizer.speak_text_async(req.text.strip())
-    logger.info("[TTS] Streaming synthesis started for: '%s…'", req.text[:60])
-
-    async def audio_stream():
-        try:
-            while True:
-                item = await queue.get()
-                if item is None:
-                    break
-                if isinstance(item, RuntimeError):
-                    raise item
-                yield item
-        finally:
-            # Keep SDK objects alive until the generator is fully consumed
-            _ = synthesizer
-            _ = push_stream  # noqa: F841
-
-    return StreamingResponse(
-        audio_stream(),
-        media_type="audio/mpeg",
-        headers={"Cache-Control": "public, max-age=3600"},
-    )
+    _tts.validate_config()
+    return _tts.streaming_response(req.text.strip())
 
 
 @app.post("/api/generate-story")
