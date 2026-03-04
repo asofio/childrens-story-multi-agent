@@ -213,3 +213,156 @@
   border-radius: 20px;
   border: 1px solid #E8E1FF;
 }
+
+/* ─── Bonus pages (Look & Find / Character Glossary) ─────────────────────── */
+
+.bonusPage {
+  display: flex;
+  flex-direction: column;
+  padding: 28px 24px;
+  min-height: 480px;
+  overflow-y: auto;
+}
+
+.bonusHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.bonusIcon {
+  font-size: 2rem;
+}
+
+.bonusTitle {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.bonusInstructions {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+/* ── Look & Find ──────────────────────────────────────────────────────────── */
+
+.lookAndFindList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.lookAndFindItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #F5F2FF 0%, #F0FFFE 100%);
+  border-radius: var(--radius-md);
+  border: 1.5px solid #E8E1FF;
+}
+
+.lookAndFindNumber {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: white;
+  font-weight: 800;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.lookAndFindContent {
+  flex: 1;
+}
+
+.lookAndFindName {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.lookAndFindName strong {
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.lookAndFindPage {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-secondary);
+  background: #E8E1FF;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.lookAndFindDesc {
+  margin: 0 0 4px;
+  font-size: 0.92rem;
+  color: var(--color-text);
+  line-height: 1.45;
+}
+
+.lookAndFindHint {
+  margin: 0;
+  font-size: 0.83rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Character Glossary ───────────────────────────────────────────────────── */
+
+.glossaryList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.glossaryEntry {
+  padding: 16px 18px;
+  background: linear-gradient(135deg, #F5F2FF 0%, #F0FFFE 100%);
+  border-radius: var(--radius-md);
+  border: 1.5px solid #E8E1FF;
+}
+
+.glossaryEntryHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.glossaryName {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.glossaryRole {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+  background: var(--color-secondary);
+  padding: 2px 10px;
+  border-radius: 20px;
+  text-transform: lowercase;
+}
+
+.glossaryDescription {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--color-text);
+  line-height: 1.5;
+}

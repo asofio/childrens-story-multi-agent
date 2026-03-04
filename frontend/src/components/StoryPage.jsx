@@ -100,3 +100,60 @@ export default function StoryPage({ page, totalPages }) {
     </div>
   );
 }
+
+/** Look & Find activity page — appended after "The End" */
+export function LookAndFindPage({ activity }) {
+  if (!activity) return null;
+  return (
+    <div className={styles.bonusPage}>
+      <div className={styles.bonusHeader}>
+        <span className={styles.bonusIcon}>🔎</span>
+        <h3 className={styles.bonusTitle}>Look &amp; Find!</h3>
+      </div>
+      <p className={styles.bonusInstructions}>{activity.instructions}</p>
+      <div className={styles.lookAndFindList}>
+        {activity.items?.map((item, i) => (
+          <div key={i} className={styles.lookAndFindItem}>
+            <div className={styles.lookAndFindNumber}>{i + 1}</div>
+            <div className={styles.lookAndFindContent}>
+              <div className={styles.lookAndFindName}>
+                <strong>{item.item_name}</strong>
+                <span className={styles.lookAndFindPage}>Page {item.page_number}</span>
+              </div>
+              <p className={styles.lookAndFindDesc}>{item.item_description}</p>
+              {item.hint && (
+                <p className={styles.lookAndFindHint}>
+                  <em>Hint: {item.hint}</em>
+                </p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Character Glossary page — appended after "The End" */
+export function CharacterGlossaryPage({ glossary }) {
+  if (!glossary) return null;
+  return (
+    <div className={styles.bonusPage}>
+      <div className={styles.bonusHeader}>
+        <span className={styles.bonusIcon}>📖</span>
+        <h3 className={styles.bonusTitle}>Meet the Characters!</h3>
+      </div>
+      <div className={styles.glossaryList}>
+        {glossary.entries?.map((entry, i) => (
+          <div key={i} className={styles.glossaryEntry}>
+            <div className={styles.glossaryEntryHeader}>
+              <span className={styles.glossaryName}>{entry.name}</span>
+              <span className={styles.glossaryRole}>{entry.role}</span>
+            </div>
+            <p className={styles.glossaryDescription}>{entry.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

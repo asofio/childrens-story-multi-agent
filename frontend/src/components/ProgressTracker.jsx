@@ -3,13 +3,25 @@ import styles from './ProgressTracker.module.css';
 
 /* ─── Static step definitions ─────────────────────────────────────────────── */
 
-const WORKFLOW_STEPS = [
+const BASE_WORKFLOW_STEPS = [
   { id: 'orchestrator',    icon: '📋', label: 'Orchestrator',    hint: 'Planning the story outline...' },
   { id: 'story_architect', icon: '✍️',  label: 'Story Architect', hint: 'Writing the story pages...' },
   { id: 'art_director',    icon: '🎨', label: 'Art Director',    hint: 'Generating illustrations...' },
   { id: 'story_reviewer',  icon: '🔍', label: 'Story Reviewer',  hint: 'Reviewing for quality...' },
   { id: 'decision',        icon: '⚖️',  label: 'Decision',       hint: 'Finalising the story...' },
 ];
+
+const LOOK_AND_FIND_STEP    = { id: 'look_and_find',      icon: '🔎', label: 'Look & Find',       hint: 'Creating the Look & Find activity page...' };
+const CHARACTER_GLOSSARY_STEP = { id: 'character_glossary', icon: '📖', label: 'Character Glossary', hint: 'Writing the Character Glossary...' };
+const FINAL_ASSEMBLY_STEP   = { id: 'final_assembly',      icon: '📦', label: 'Final Assembly',    hint: 'Assembling the final story...' };
+
+function buildWorkflowSteps(bonusAgents) {
+  const steps = [...BASE_WORKFLOW_STEPS];
+  if (bonusAgents?.lookAndFind)      steps.push(LOOK_AND_FIND_STEP);
+  if (bonusAgents?.characterGlossary) steps.push(CHARACTER_GLOSSARY_STEP);
+  steps.push(FINAL_ASSEMBLY_STEP);
+  return steps;
+}
 
 /* ─── Helpers ─────────────────────────────────────────────────────────────── */
 
@@ -105,6 +117,31 @@ function ResponseBlock({ data, executorId }) {
         {!approved && data.revision_instructions && (
           <div className={styles.revisionInstructions}>{data.revision_instructions}</div>
         )}
+      </div>
+    );
+  }
+  if (executorId === 'look_and_find') {
+    return (
+      <div className={styles.responseBlock}>
+        <div className={styles.detailLabel}>🔎 Activity created — {data.item_count} items to find</div>
+        {data.items?.map((item, i) => (
+          <div key={i} className={styles.responseRow}>
+            <span className={styles.responseKey}>Page {item.page}</span>
+            <span>{item.name}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (executorId === 'character_glossary') {
+    return (
+      <div className={styles.responseBlock}>
+        <div className={styles.detailLabel}>📖 Glossary complete — {data.entry_count} characters</div>
+        {data.characters?.map((name, i) => (
+          <div key={i} className={styles.responseRow}>
+            <span className={styles.responseKey}>{name}</span>
+          </div>
+        ))}
       </div>
     );
   }
@@ -343,9 +380,11 @@ export default function ProgressTracker({
   mode = 'full',
   isCollapsed = false,
   onToggle,
+  bonusAgents = { lookAndFind: true, characterGlossary: true },
 }) {
   const revisionEvents = progress.filter(p => p.executor_id === 'revision');
   const isSidebar = mode === 'sidebar';
+  const workflowSteps = useMemo(() => buildWorkflowSteps(bonusAgents), [bonusAgents]);
 
   return (
     <div className={`${styles.container} ${isSidebar ? styles.containerSidebar : ''}`}>
@@ -374,7 +413,7 @@ export default function ProgressTracker({
 
           {/* Workflow steps */}
           <div className={styles.workflow}>
-            {WORKFLOW_STEPS.map((step, idx) => {
+            {workflowSteps.map((step, idx) => {
               const status  = resolveStepStatus(step.id, progress, details);
               const progEvt = progress.filter(p => p.executor_id === step.id).at(-1);
               const isAutoApproved = step.id === 'story_reviewer' &&
@@ -382,7 +421,7 @@ export default function ProgressTracker({
               const message = isAutoApproved
                 ? 'Auto-approved — reviewer skipped'
                 : progEvt?.message || step.hint;
-              const isLast  = idx === WORKFLOW_STEPS.length - 1;
+              const isLast  = idx === workflowSteps.length - 1;
 
               return (
                 <div key={step.id} className={`${styles.step} ${styles[status]}`}>

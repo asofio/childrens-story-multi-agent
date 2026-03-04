@@ -2,12 +2,14 @@ import { useState } from 'react';
 import styles from './StoryForm.module.css';
 
 const DEFAULT_FORM = {
-  main_character:       'Thomas the Turtle',
-  supporting_characters: ['Oliver the Wise Owl', 'Benny the Bunny'],
-  setting:              'A magical forest',
-  moral:                "True courage means helping others even when you're scared",
-  main_problem:         "A mysterious fog has covered the forest and Thomas' friend, Benny the Bunny, is lost inside it. Thomas must find Benny and bring him back safely.",
-  additional_details:   '',
+  main_character:         'Thomas the Turtle',
+  supporting_characters:  ['Oliver the Wise Owl', 'Benny the Bunny'],
+  setting:                'A magical forest',
+  moral:                  "True courage means helping others even when you're scared",
+  main_problem:           "A mysterious fog has covered the forest and Thomas' friend, Benny the Bunny, is lost inside it. Thomas must find Benny and bring him back safely.",
+  additional_details:     '',
+  include_look_and_find:      true,
+  include_character_glossary: true,
 };
 
 export default function StoryForm({ onSubmit, isGenerating }) {
@@ -168,6 +170,39 @@ export default function StoryForm({ onSubmit, isGenerating }) {
             value={form.additional_details}
             onChange={handleField('additional_details')}
           />
+        </div>
+
+        <hr className={styles.divider} />
+
+        {/* ── Bonus content ─────────────────────────────────────────── */}
+        <div className={styles.sectionTitle}>🌟 Bonus Content</div>
+
+        <div className={styles.checkboxGroup}>
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              className={styles.checkboxInput}
+              checked={form.include_look_and_find}
+              onChange={e => setForm(prev => ({ ...prev, include_look_and_find: e.target.checked }))}
+            />
+            <span className={styles.checkboxText}>
+              <strong>🔎 Generate Look &amp; Find Activity Page</strong>
+              <span className={styles.checkboxHint}>Challenges the child to find 3–5 hidden items across the story's illustrations</span>
+            </span>
+          </label>
+
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              className={styles.checkboxInput}
+              checked={form.include_character_glossary}
+              onChange={e => setForm(prev => ({ ...prev, include_character_glossary: e.target.checked }))}
+            />
+            <span className={styles.checkboxText}>
+              <strong>📖 Generate Character Glossary</strong>
+              <span className={styles.checkboxHint}>Adds a "Meet the Characters" page with fun descriptions of each character</span>
+            </span>
+          </label>
         </div>
 
         {/* ── Submit ────────────────────────────────────────────────── */}

@@ -16,7 +16,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from .config import settings
 from .models import StoryRequest, StoryResponse
-from .workflow import story_workflow
+from .workflow import build_story_workflow
 from .events import ProgressDetailEvent
 
 try:
@@ -41,19 +41,27 @@ logger = logging.getLogger(__name__)
 # ─── Executor display metadata ────────────────────────────────────────────────
 
 _EXECUTOR_LABELS: dict[str, str] = {
-    "orchestrator": "Orchestrator",
-    "story_architect": "Story Architect",
-    "art_director": "Art Director",
-    "story_reviewer": "Story Reviewer",
-    "decision": "Decision",
+    "orchestrator":       "Orchestrator",
+    "story_architect":    "Story Architect",
+    "art_director":       "Art Director",
+    "story_reviewer":     "Story Reviewer",
+    "decision":           "Decision",
+    "approval_gateway":   "Approval Gateway",
+    "look_and_find":      "Look & Find",
+    "character_glossary": "Character Glossary",
+    "final_assembly":     "Final Assembly",
 }
 
 _EXECUTOR_MESSAGES: dict[str, str] = {
-    "orchestrator": "Creating the story outline...",
-    "story_architect": "Writing the story pages...",
-    "art_director": "Generating illustrations for each page...",
-    "story_reviewer": "Reviewing story for quality & consistency...",
-    "decision": "Making final decisions...",
+    "orchestrator":       "Creating the story outline...",
+    "story_architect":    "Writing the story pages...",
+    "art_director":       "Generating illustrations for each page...",
+    "story_reviewer":     "Reviewing story for quality & consistency...",
+    "decision":           "Making final decisions...",
+    "approval_gateway":   "Routing approved story...",
+    "look_and_find":      "Creating the Look & Find activity page...",
+    "character_glossary": "Writing the Character Glossary...",
+    "final_assembly":     "Assembling the final story...",
 }
 
 # ─── App ──────────────────────────────────────────────────────────────────────
@@ -106,7 +114,14 @@ async def _story_event_generator(
         revision_count = 0
         active_executor: str | None = None
 
-        async for event in story_workflow.run_stream(request):
+        # Build a fresh workflow for this request — the graph topology depends on
+        # which bonus agents the user requested.
+        workflow = build_story_workflow(
+            include_look_and_find=request.include_look_and_find,
+            include_character_glossary=request.include_character_glossary,
+        )
+
+        async for event in workflow.run_stream(request):
 
             if isinstance(event, ExecutorInvokedEvent):
                 executor_id: str = event.executor_id or ""
