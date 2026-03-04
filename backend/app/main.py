@@ -6,12 +6,15 @@ Endpoints:
   POST /api/generate-story      — runs the story workflow; streams SSE progress events
 """
 
+import io
 import json
 import logging
 from typing import AsyncGenerator
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
 from .config import settings
@@ -197,6 +200,119 @@ async def _story_event_generator(
     except Exception as exc:
         logger.exception("[Workflow] Unhandled error in story event generator")
         yield _sse_event("error", {"message": f"Internal error: {exc}"})
+
+
+# ─── Text-to-Speech (TTS) ─────────────────────────────────────────────────────
+
+try:
+    import azure.cognitiveservices.speech as speechsdk
+    _SPEECH_SDK_AVAILABLE = True
+except ImportError:
+    _SPEECH_SDK_AVAILABLE = False
+
+from azure.identity import DefaultAzureCredential
+_credential = DefaultAzureCredential()
+
+SPEECH_REGION      = settings.azure_speech_region
+SPEECH_RESOURCE_ID = settings.azure_speech_resource_id
+SPEECH_ENDPOINT    = settings.azure_speech_endpoint
+
+TTS_VOICE = "en-US-Ava:DragonHDLatestNeural"
+
+
+def _get_auth_token() -> str:
+    """
+    Fetch an AAD access token and format it for the Speech SDK.
+    The SDK expects:  aad#<resource_id>#<token>
+    """
+    token = _credential.get_token("https://cognitiveservices.azure.com/.default")
+    return f"aad#{SPEECH_RESOURCE_ID}#{token.token}"
+
+
+def _make_speech_config() -> "speechsdk.SpeechConfig":
+    """Build a SpeechConfig using AAD token auth."""
+    if SPEECH_ENDPOINT:
+        config = speechsdk.SpeechConfig(endpoint=SPEECH_ENDPOINT)
+    else:
+        config = speechsdk.SpeechConfig(
+            host=f"wss://{SPEECH_REGION}.tts.speech.microsoft.com"
+        )
+    config.authorization_token = _get_auth_token()
+    return config
+
+
+class TTSRequest(BaseModel):
+    text: str
+
+
+@app.post("/api/tts")
+async def text_to_speech(req: TTSRequest):
+    """
+    Synthesize speech from text using Azure AI Speech Service with
+    DefaultAzureCredential AAD token auth and the en-US-Ava:DragonHDLatestNeural voice.
+    Returns audio/mpeg.
+    """
+    if not req.text or not req.text.strip():
+        raise HTTPException(status_code=400, detail="Text is required.")
+
+    if not SPEECH_REGION and not SPEECH_ENDPOINT:
+        raise HTTPException(
+            status_code=503,
+            detail="Azure Speech Service is not configured. Set AZURE_SPEECH_REGION or AZURE_SPEECH_ENDPOINT.",
+        )
+
+    if not SPEECH_RESOURCE_ID:
+        raise HTTPException(
+            status_code=503,
+            detail="Azure Speech Service is not configured. Set AZURE_SPEECH_RESOURCE_ID.",
+        )
+
+    if not _SPEECH_SDK_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="azure-cognitiveservices-speech package is not installed.",
+        )
+
+    speech_config = _make_speech_config()
+    speech_config.set_speech_synthesis_output_format(
+        speechsdk.SpeechSynthesisOutputFormat.Audio24Khz48KBitRateMonoMp3
+    )
+    speech_config.speech_synthesis_voice_name = TTS_VOICE
+
+    # Synthesize to in-memory bytes (audio_config=None suppresses speaker output)
+    synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
+    result = synthesizer.speak_text_async(req.text.strip()).get()
+
+    if result.reason == speechsdk.ResultReason.Canceled:
+        cancellation = result.cancellation_details
+        logger.error(
+            "[TTS] Synthesis canceled: %s — %s",
+            cancellation.reason,
+            cancellation.error_details,
+        )
+        raise HTTPException(
+            status_code=502,
+            detail=f"Speech synthesis failed: {cancellation.error_details}",
+        )
+
+    if result.reason != speechsdk.ResultReason.SynthesizingAudioCompleted:
+        raise HTTPException(status_code=502, detail="Speech synthesis did not complete.")
+
+    audio_data = result.audio_data
+    logger.info(
+        "[TTS] Synthesized %d bytes for: '%s…'",
+        len(audio_data),
+        req.text[:60],
+    )
+
+    return StreamingResponse(
+        io.BytesIO(audio_data),
+        media_type="audio/mpeg",
+        headers={
+            "Content-Length": str(len(audio_data)),
+            "Cache-Control": "public, max-age=3600",
+        },
+    )
 
 
 @app.post("/api/generate-story")

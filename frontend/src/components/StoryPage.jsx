@@ -1,4 +1,79 @@
+import { useState, useRef, useCallback } from 'react';
 import styles from './StoryPage.module.css';
+
+/* ─── TTS hook ──────────────────────────────────────────────────────────── */
+
+function useTTS() {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const audioRef = useRef(null);
+
+  const play = useCallback(async (text) => {
+    // If already playing, stop
+    if (audioRef.current) {
+      audioRef.current.pause();
+      URL.revokeObjectURL(audioRef.current._blobUrl);
+      audioRef.current = null;
+      setIsPlaying(false);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) {
+        const err = await res.text();
+        console.error('[TTS] Error:', err);
+        return;
+      }
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio._blobUrl = url;
+      audioRef.current = audio;
+
+      const cleanup = () => {
+        URL.revokeObjectURL(url);
+        audioRef.current = null;
+        setIsPlaying(false);
+      };
+      audio.addEventListener('ended', cleanup);
+      audio.addEventListener('error', cleanup);
+
+      setIsPlaying(true);
+      await audio.play();
+    } catch (err) {
+      console.error('[TTS] Fetch failed:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  return { isPlaying, isLoading, play };
+}
+
+/* ─── Play button ───────────────────────────────────────────────────────── */
+
+function PlayButton({ text }) {
+  const { isPlaying, isLoading, play } = useTTS();
+  return (
+    <button
+      className={styles.playBtn}
+      onClick={() => play(text)}
+      disabled={isLoading}
+      title={isPlaying ? 'Stop reading' : 'Read aloud'}
+      aria-label={isPlaying ? 'Stop reading' : 'Read aloud'}
+    >
+      {isLoading
+        ? <span className={styles.playSpinner} />
+        : isPlaying ? '⏹' : '▶'}
+    </button>
+  );
+}
 
 /** Cover page — shown as "page 0" before the story pages */
 export function CoverPage({ story }) {
@@ -29,6 +104,7 @@ export function CoverPage({ story }) {
         <div className={styles.coverMoral}>
           <em>"{story.moral_summary}"</em>
         </div>
+        <PlayButton text={story.title} />
       </div>
     </div>
   );
@@ -41,6 +117,9 @@ export function FinalPage({ story }) {
       <div className={styles.finalPage}>
         <div className={styles.finalImageArea}>
           <img src={story.the_end_image_url} alt="The End" className={styles.finalImage} />
+          <div className={styles.finalPlayOverlay}>
+            <PlayButton text="The End" />
+          </div>
         </div>
       </div>
     );
@@ -55,6 +134,9 @@ export function FinalPage({ story }) {
       {story.review_notes && story.review_notes !== 'Story approved with no issues.' && (
         <p className={styles.finalNotes}>{story.review_notes}</p>
       )}
+      <div className={styles.finalFallbackPlay}>
+        <PlayButton text="The End" />
+      </div>
     </div>
   );
 }
@@ -88,7 +170,10 @@ export default function StoryPage({ page, totalPages }) {
 
       {/* Narrative text */}
       <div className={styles.textArea}>
-        <p className={styles.storyText}>{page.text}</p>
+        <div className={styles.textRow}>
+          <p className={styles.storyText}>{page.text}</p>
+          <PlayButton text={page.text} />
+        </div>
         {page.characters_present?.length > 0 && (
           <div className={styles.characterTags}>
             {page.characters_present.map((c, i) => (
