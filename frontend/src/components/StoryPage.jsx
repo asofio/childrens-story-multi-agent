@@ -6,52 +6,126 @@ import styles from './StoryPage.module.css';
 function useTTS() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const audioRef = useRef(null);
+  const stateRef = useRef({ audio: null, mediaSource: null });
+
+  const cleanup = useCallback(() => {
+    const { audio, mediaSource } = stateRef.current;
+    if (audio) {
+      audio.pause();
+      if (audio._blobUrl) URL.revokeObjectURL(audio._blobUrl);
+    }
+    if (mediaSource && mediaSource.readyState === 'open') {
+      try { mediaSource.endOfStream(); } catch (_) {}
+    }
+    stateRef.current = { audio: null, mediaSource: null };
+    setIsPlaying(false);
+    setIsLoading(false);
+  }, []);
 
   const play = useCallback(async (text) => {
-    // If already playing, stop
-    if (audioRef.current) {
-      audioRef.current.pause();
-      URL.revokeObjectURL(audioRef.current._blobUrl);
-      audioRef.current = null;
-      setIsPlaying(false);
+    // Toggle off if already playing
+    if (stateRef.current.audio) {
+      cleanup();
       return;
     }
 
     setIsLoading(true);
     try {
-      const res = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
-      });
-      if (!res.ok) {
-        const err = await res.text();
-        console.error('[TTS] Error:', err);
-        return;
-      }
-      const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
+      const ms  = new MediaSource();
+      const url = URL.createObjectURL(ms);
       const audio = new Audio(url);
       audio._blobUrl = url;
-      audioRef.current = audio;
+      stateRef.current = { audio, mediaSource: ms };
 
-      const cleanup = () => {
-        URL.revokeObjectURL(url);
-        audioRef.current = null;
-        setIsPlaying(false);
-      };
-      audio.addEventListener('ended', cleanup);
-      audio.addEventListener('error', cleanup);
+      audio.addEventListener('ended', cleanup, { once: true });
+      audio.addEventListener('error', cleanup, { once: true });
+      // Some browsers (especially Safari) fire 'pause' instead of 'ended'
+      // when a MediaSource stream ends. Guard with audio.ended so this
+      // doesn't trigger on a normal user-initiated pause.
+      audio.addEventListener('pause', () => { if (audio.ended) cleanup(); });
 
-      setIsPlaying(true);
-      await audio.play();
+      await new Promise((resolve, reject) => {
+        ms.addEventListener('sourceopen', async () => {
+          let sb;
+          try {
+            sb = ms.addSourceBuffer('audio/mpeg');
+          } catch (e) { reject(e); return; }
+
+          // Serialise appendBuffer calls — the SourceBuffer can only handle one at a time
+          const queue = [];
+          let busy = false;
+          let streamDone = false;
+
+          const tryEndStream = () => {
+            if (streamDone && !busy && queue.length === 0 && ms.readyState === 'open') {
+              try { ms.endOfStream(); } catch (_) {}
+            }
+          };
+
+          const flush = () => {
+            if (busy || !queue.length) return;
+            const chunk = queue.shift();
+            busy = true;
+            sb.appendBuffer(chunk);
+          };
+
+          sb.addEventListener('updateend', () => {
+            busy = false;
+            if (queue.length > 0) {
+              flush();
+            } else {
+              tryEndStream();
+            }
+          });
+
+          const push = (chunk) => { queue.push(chunk); flush(); };
+
+          // Start playback as soon as the browser has enough data
+          audio.addEventListener('canplay', () => {
+            setIsLoading(false);
+            setIsPlaying(true);
+            audio.play().catch(console.error);
+          }, { once: true });
+
+          // Fetch the streaming TTS response
+          let res;
+          try {
+            res = await fetch('/api/tts', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text }),
+            });
+          } catch (e) { reject(e); return; }
+
+          if (!res.ok) { reject(new Error(`TTS ${res.status}`)); return; }
+
+          // Pipe response body chunks into the SourceBuffer, then signal end-of-stream.
+          // Inline (no detached IIFE) so errors propagate to reject() and
+          // resolve() is only called after all chunks are consumed.
+          const reader = res.body.getReader();
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) {
+                streamDone = true;
+                tryEndStream(); // in case queue already drained before this point
+                break;
+              }
+              push(value);
+            }
+            resolve(); // stream fully consumed — settle the outer promise
+          } catch (e) {
+            reject(e);
+          }
+        }, { once: true });
+
+        ms.addEventListener('error', () => reject(new Error('MediaSource error')), { once: true });
+      });
     } catch (err) {
-      console.error('[TTS] Fetch failed:', err);
-    } finally {
-      setIsLoading(false);
+      console.error('[TTS] Error:', err);
+      cleanup();
     }
-  }, []);
+  }, [cleanup]);
 
   return { isPlaying, isLoading, play };
 }

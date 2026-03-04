@@ -6,6 +6,7 @@ Endpoints:
   POST /api/generate-story      — runs the story workflow; streams SSE progress events
 """
 
+import asyncio
 import io
 import json
 import logging
@@ -245,7 +246,13 @@ def _get_auth_token() -> str:
 
 
 def _make_speech_config() -> "speechsdk.SpeechConfig":
-    """Build a SpeechConfig using AAD token auth."""
+    """Build a SpeechConfig using AAD token auth.
+
+    Uses the configured SPEECH_ENDPOINT (HTTPS) or falls back to the standard
+    regional WSS host.  The websocket/v2 endpoint is only needed when streaming
+    text INPUT into TTS; for streaming audio OUTPUT via PushAudioOutputStream
+    the standard endpoint works and avoids v2 auth timeout issues.
+    """
     if SPEECH_ENDPOINT:
         config = speechsdk.SpeechConfig(endpoint=SPEECH_ENDPOINT)
     else:
@@ -254,6 +261,36 @@ def _make_speech_config() -> "speechsdk.SpeechConfig":
         )
     config.authorization_token = _get_auth_token()
     return config
+
+
+if _SPEECH_SDK_AVAILABLE:
+    class _TTSStreamCallback(speechsdk.audio.PushAudioOutputStreamCallback):
+        """Bridges SDK audio push-stream chunks into an asyncio.Queue.
+
+        The SDK calls write() on its own thread for each audio chunk and
+        close() when synthesis completes.  We safely hand these over to the
+        asyncio event loop via call_soon_threadsafe.
+        """
+
+        def __init__(
+            self,
+            queue: asyncio.Queue,
+            loop: asyncio.AbstractEventLoop,
+        ) -> None:
+            super().__init__()
+            self._queue = queue
+            self._loop  = loop
+
+        def write(self, audio_buffer: memoryview) -> int:
+            self._loop.call_soon_threadsafe(
+                self._queue.put_nowait, bytes(audio_buffer)
+            )
+            return len(audio_buffer)
+
+        def close(self) -> None:
+            # None is the sentinel that tells the async generator to stop
+            logger.info("[TTS] PushAudioOutputStream close() called")
+            self._loop.call_soon_threadsafe(self._queue.put_nowait, None)
 
 
 class TTSRequest(BaseModel):
@@ -265,7 +302,8 @@ async def text_to_speech(req: TTSRequest):
     """
     Synthesize speech from text using Azure AI Speech Service with
     DefaultAzureCredential AAD token auth and the en-US-Ava:DragonHDLatestNeural voice.
-    Returns audio/mpeg.
+    Streams audio/mpeg chunks to the client as synthesis progresses so playback
+    can begin before the full audio is ready.
     """
     if not req.text or not req.text.strip():
         raise HTTPException(status_code=400, detail="Text is required.")
@@ -294,39 +332,61 @@ async def text_to_speech(req: TTSRequest):
     )
     speech_config.speech_synthesis_voice_name = TTS_VOICE
 
-    # Synthesize to in-memory bytes (audio_config=None suppresses speaker output)
-    synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
-    result = synthesizer.speak_text_async(req.text.strip()).get()
+    loop  = asyncio.get_running_loop()
+    queue: asyncio.Queue = asyncio.Queue()
 
-    if result.reason == speechsdk.ResultReason.Canceled:
-        cancellation = result.cancellation_details
-        logger.error(
-            "[TTS] Synthesis canceled: %s — %s",
-            cancellation.reason,
-            cancellation.error_details,
-        )
-        raise HTTPException(
-            status_code=502,
-            detail=f"Speech synthesis failed: {cancellation.error_details}",
-        )
-
-    if result.reason != speechsdk.ResultReason.SynthesizingAudioCompleted:
-        raise HTTPException(status_code=502, detail="Speech synthesis did not complete.")
-
-    audio_data = result.audio_data
-    logger.info(
-        "[TTS] Synthesized %d bytes for: '%s…'",
-        len(audio_data),
-        req.text[:60],
+    # PushAudioOutputStream + callback: the SDK calls write() per audio chunk on
+    # its own thread and close() when done — both safely enqueue onto the asyncio loop.
+    callback    = _TTSStreamCallback(queue, loop)
+    push_stream = speechsdk.audio.PushAudioOutputStream(callback)
+    audio_cfg   = speechsdk.audio.AudioOutputConfig(stream=push_stream)
+    synthesizer = speechsdk.SpeechSynthesizer(
+        speech_config=speech_config, audio_config=audio_cfg
     )
 
+    # Wire up cancellation errors so they surface in the stream
+    def on_canceled(evt):
+        details = evt.result.cancellation_details
+        logger.error(
+            "[TTS] Synthesis canceled: %s — %s", details.reason, details.error_details
+        )
+        loop.call_soon_threadsafe(
+            queue.put_nowait,
+            RuntimeError(f"Speech synthesis failed: {details.error_details}"),
+        )
+
+    # Belt-and-suspenders: push the None sentinel when synthesis completes.
+    # The PushAudioOutputStreamCallback.close() *should* do this, but some
+    # SDK versions only fire close() reliably when the result future is
+    # consumed via .get().  This event is the authoritative "all audio has
+    # been written" signal and ensures the HTTP response body always closes.
+    def on_completed(evt):
+        logger.info("[TTS] synthesis_completed event fired — closing audio stream")
+        loop.call_soon_threadsafe(queue.put_nowait, None)
+
+    synthesizer.synthesis_completed.connect(on_completed)
+    synthesizer.synthesis_canceled.connect(on_canceled)
+    synthesizer.speak_text_async(req.text.strip())
+    logger.info("[TTS] Streaming synthesis started for: '%s…'", req.text[:60])
+
+    async def audio_stream():
+        try:
+            while True:
+                item = await queue.get()
+                if item is None:
+                    break
+                if isinstance(item, RuntimeError):
+                    raise item
+                yield item
+        finally:
+            # Keep SDK objects alive until the generator is fully consumed
+            _ = synthesizer
+            _ = push_stream  # noqa: F841
+
     return StreamingResponse(
-        io.BytesIO(audio_data),
+        audio_stream(),
         media_type="audio/mpeg",
-        headers={
-            "Content-Length": str(len(audio_data)),
-            "Cache-Control": "public, max-age=3600",
-        },
+        headers={"Cache-Control": "public, max-age=3600"},
     )
 
 
