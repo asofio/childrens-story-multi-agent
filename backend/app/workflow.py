@@ -35,6 +35,7 @@ Graph topology:
 
 from agent_framework import WorkflowBuilder, Workflow
 
+from .config import settings
 from .agents.orchestrator import OrchestratorExecutor
 from .agents.story_architect import StoryArchitectExecutor
 from .agents.art_director import ArtDirectorExecutor
@@ -55,15 +56,28 @@ def build_story_workflow() -> Workflow:
     story_reviewer = StoryReviewerExecutor()
     decision = DecisionExecutor()
 
-    workflow = (
+    builder = (
         WorkflowBuilder()
         .set_start_executor(orchestrator)
         .set_max_iterations(30)
         # Forward sequential edges
         .add_edge(orchestrator, story_architect)
         .add_edge(story_architect, art_director)
-        .add_edge(art_director, story_reviewer)
-        .add_edge(story_reviewer, decision)
+    )
+
+    if settings.skip_story_reviewer:
+        # Bypass the LLM reviewer — ArtDirector output goes straight to Decision,
+        # which will auto-approve via its StoryDraft handler.
+        builder = builder.add_edge(art_director, decision)
+    else:
+        builder = (
+            builder
+            .add_edge(art_director, story_reviewer)
+            .add_edge(story_reviewer, decision)
+        )
+
+    workflow = (
+        builder
         # Back-edge: DecisionExecutor loops to OrchestratorExecutor when revision is needed.
         # On approval (or budget exhaustion) DecisionExecutor calls ctx.yield_output()
         # instead of ctx.send_message(), so this edge is not traversed.

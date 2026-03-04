@@ -14,6 +14,8 @@ import logging
 
 from agent_framework import Executor, WorkflowContext, handler
 
+from ..config import settings
+from ..events import ProgressDetailEvent
 from ..models import ReviewResult, StoryDraft, StoryResponse
 from ..signals import RevisionSignal
 
@@ -29,6 +31,25 @@ class DecisionExecutor(Executor):
 
     def __init__(self) -> None:
         super().__init__(id="decision")
+
+    @handler
+    async def handle_illustrated_draft(
+        self,
+        draft: StoryDraft,
+        ctx: WorkflowContext[ReviewResult, StoryResponse],
+    ) -> None:
+        """Auto-approve path used when SKIP_STORY_REVIEWER=true."""
+        logger.info(
+            "[Decision] SKIP_STORY_REVIEWER is enabled — auto-approving '%s'.",
+            draft.title,
+        )
+        await ctx.add_event(ProgressDetailEvent(
+            executor_id="story_reviewer",
+            detail_type="auto_approved",
+            detail_data={"title": draft.title},
+        ))
+        auto_review = ReviewResult(approved=True, issues=[], revision_instructions="")
+        await self.handle_review(auto_review, ctx)
 
     @handler
     async def handle_review(

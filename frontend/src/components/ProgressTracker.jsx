@@ -25,7 +25,7 @@ function resolveStepStatus(stepId, progress, details = []) {
   if (stepDetails.length > 0) {
     const lastDetail = stepDetails.at(-1);
     const activeTypes    = new Set(['executor_started', 'revision_started', 'prompt_sent', 'page_content', 'image_started', 'image_queued', 'images_batch_started']);
-    const completedTypes = new Set(['response_received', 'image_completed', 'image_failed']);
+    const completedTypes = new Set(['response_received', 'image_completed', 'image_failed', 'auto_approved']);
     if (activeTypes.has(lastDetail.detail_type)) {
       return lastDetail.detail_type === 'revision_started' ? 'revision' : 'active';
     }
@@ -56,6 +56,14 @@ function PromptBlock({ text }) {
           {expanded ? 'Show less ▲' : 'Show full prompt ▼'}
         </button>
       )}
+    </div>
+  );
+}
+
+function AutoApprovedBlock() {
+  return (
+    <div className={`${styles.responseBlock} ${styles.approved}`}>
+      <div className={styles.detailLabel}>⚡ Auto-approved — story reviewer skipped</div>
     </div>
   );
 }
@@ -284,8 +292,9 @@ function StepDetailPanel({ stepId, details }) {
   return (
     <div className={styles.stepDetail}>
       {rounds.map((round, roundIdx) => {
-        const promptEvt        = round.find(d => d.detail_type === 'prompt_sent');
-        const responseEvt       = round.find(d => d.detail_type === 'response_received');
+        const promptEvt         = round.find(d => d.detail_type === 'prompt_sent');
+        const responseEvt        = round.find(d => d.detail_type === 'response_received');
+        const autoApprovedEvt    = round.find(d => d.detail_type === 'auto_approved');
         const executorStartedEvt = round.find(d => d.detail_type === 'executor_started');
         const revisionStartedEvt = round.find(d => d.detail_type === 'revision_started');
 
@@ -311,6 +320,7 @@ function StepDetailPanel({ stepId, details }) {
                 {roundIdx === 0 ? '— Initial pass' : `🔄 Revision ${roundIdx}`}
               </div>
             )}
+            {autoApprovedEvt  && <AutoApprovedBlock />}
             {executorStartedEvt && <ExecutorStartedBlock data={executorStartedEvt.data} />}
             {revisionStartedEvt && <RevisionStartedBlock data={revisionStartedEvt.data} />}
             {promptEvt   && <PromptBlock text={promptEvt.data?.prompt} />}
@@ -367,7 +377,11 @@ export default function ProgressTracker({
             {WORKFLOW_STEPS.map((step, idx) => {
               const status  = resolveStepStatus(step.id, progress, details);
               const progEvt = progress.filter(p => p.executor_id === step.id).at(-1);
-              const message = progEvt?.message || step.hint;
+              const isAutoApproved = step.id === 'story_reviewer' &&
+                details.some(d => d.executor_id === 'story_reviewer' && d.detail_type === 'auto_approved');
+              const message = isAutoApproved
+                ? 'Auto-approved — reviewer skipped'
+                : progEvt?.message || step.hint;
               const isLast  = idx === WORKFLOW_STEPS.length - 1;
 
               return (

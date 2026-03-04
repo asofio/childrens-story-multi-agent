@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     foundry_model_deployment_name: str = "gpt-4o"
     foundry_image_model_deployment_name: str = "gpt-image-1"
 
+    # Feature flags
+    # When True, the StoryReviewerExecutor is bypassed and every story is auto-approved.
+    skip_story_reviewer: bool = False
+
     # CORS origin for the React dev server
     cors_origin: str = "http://localhost:5173"
 
