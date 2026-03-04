@@ -123,7 +123,9 @@
   padding: 18px 32px 22px;
   background: var(--color-surface);
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 16px;
 }
 
 .coverMoral {
@@ -152,6 +154,7 @@
   aspect-ratio: 1 / 1;
   overflow: hidden;
   background: linear-gradient(160deg, #DFF7F4 0%, #c5f0eb 100%);
+  position: relative;
 }
 
 .finalImage {
@@ -212,6 +215,76 @@
   padding: 4px 12px;
   border-radius: 20px;
   border: 1px solid #E8E1FF;
+}
+
+/* ─── Story text row (text + play button) ─────────────────────────────────── */
+
+.textRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.textRow .storyText {
+  flex: 1;
+}
+
+/* ─── Play / TTS button ────────────────────────────────────────────────── */
+
+.playBtn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.18s, transform 0.12s;
+}
+
+.playBtn:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  transform: scale(1.08);
+}
+
+.playBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes spinPlay {
+  to { transform: rotate(360deg); }
+}
+
+.playSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spinPlay 0.7s linear infinite;
+  display: inline-block;
+}
+
+/* Play button overlaid on the "The End" full-bleed image */
+.finalPlayOverlay {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+}
+
+/* Play button below the fallback "The End" text */
+.finalFallbackPlay {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  padding-bottom: 24px;
 }
 
 /* ─── Bonus pages (Look & Find / Character Glossary) ─────────────────────── */
