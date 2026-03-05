@@ -52,6 +52,23 @@ class StoryReviewerExecutor(Executor):
             len(draft.pages),
         )
 
+        if settings.skip_story_reviewer:
+            logger.info("[StoryReviewer] SKIP_STORY_REVIEWER=true — auto-approving story.")
+            review = ReviewResult(approved=True, issues=[], revision_instructions="")
+            await ctx.add_event(ProgressDetailEvent(
+                executor_id="story_reviewer",
+                detail_type="response_received",
+                detail_data={
+                    "approved": True,
+                    "issue_count": 0,
+                    "issues": [],
+                    "revision_instructions": "",
+                    "skipped": True,
+                },
+            ))
+            await ctx.send_message(review)
+            return
+
         prompt = self._build_review_prompt(draft)
 
         await ctx.add_event(ProgressDetailEvent(
