@@ -32,16 +32,6 @@ class StoryRequest(BaseModel):
         description="Any additional plot details, themes, or scenes to include",
     )
 
-    # Bonus content flags — drive the optional fan-out agents
-    include_look_and_find: bool = Field(
-        default=True,
-        description="When True, generates a Look & Find activity page at the end of the book",
-    )
-    include_character_glossary: bool = Field(
-        default=True,
-        description="When True, generates a Character Glossary page at the end of the book",
-    )
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Intermediate workflow data models
@@ -97,32 +87,6 @@ class ReviewResult(BaseModel):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Bonus content models (produced by fan-out agents)
-# ─────────────────────────────────────────────────────────────────────────────
-
-class LookAndFindItem(BaseModel):
-    page_number: int                  # which story page the item appears on
-    item_name: str                    # short name, e.g. "glowing lantern"
-    item_description: str             # child-friendly description of what to find
-    hint: Optional[str] = None        # optional visual hint for younger readers
-
-
-class LookAndFindActivity(BaseModel):
-    instructions: str                 # opening sentence for the activity page
-    items: list[LookAndFindItem]      # 3–5 things to find across the story pages
-
-
-class CharacterGlossaryEntry(BaseModel):
-    name: str                         # character name
-    description: str                  # short, fun description suitable for ages 5–8
-    role: str                         # e.g. "main character", "best friend", "wise mentor"
-
-
-class CharacterGlossary(BaseModel):
-    entries: list[CharacterGlossaryEntry]
-
-
-# ─────────────────────────────────────────────────────────────────────────────
 # Final output model
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -134,8 +98,6 @@ class StoryResponse(BaseModel):
     the_end_image_url: Optional[str] = None
     review_notes: str  # summary from the reviewer (even if approved)
     revision_rounds: int  # how many revision cycles were needed
-    look_and_find: Optional[LookAndFindActivity] = None   # populated by LookAndFindActivityExecutor
-    character_glossary: Optional[CharacterGlossary] = None  # populated by CharacterGlossaryExecutor
 
 
 # ─────────────────────────────────────────────────────────────────────────────
