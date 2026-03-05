@@ -1,100 +1,61 @@
 # Children's Story Studio — Multi-Agent Orchestration
 
-A full-stack application that uses **Microsoft Agent Framework** to orchestrate
-multiple AI agents for generating illustrated children's stories.
+<!-- TODO: Add screenshot of the running application here -->
+<!-- ![Children's Story Studio](docs/images/app-screenshot.png) -->
 
-## Architecture
+**Children's Story Studio** is a full-stack application that uses [Microsoft Agent Framework](https://github.com/microsoft/agent-framework) to orchestrate multiple AI agents that collaboratively generate illustrated children's stories. It is designed to serve three purposes:
 
-```
-React + Vite (frontend)
-        ↕  SSE stream  ↕
-    FastAPI (backend)
-        ↕  workflow  ↕
-   Agent Framework WorkflowBuilder
-        │
-        ├── OrchestratorAgent    — Creates the story outline
-        ├── StoryArchitectAgent  — Writes page text & image prompts
-        ├── ArtDirectorAgent     — Generates illustrations per page
-        ├── StoryReviewerAgent   — Quality-checks the complete story
-        └── DecisionExecutor     — Approves or loops for revisions
-```
+1. **Field Seller Demo** — A polished, ready-to-run demonstration of multi-agent AI orchestration that sellers can walk customers through in minutes.
+2. **Multi-Agent Orchestration Example** — A real-world reference implementation showing how to build agent workflows with Microsoft Agent Framework, including conditional branching, revision loops, and real-time progress streaming.
+3. **Customer Engineering Sandbox** — A well-structured starting point that customer engineers can clone, experiment with, and extend with new agents and multi-modal AI capabilities.
 
-**Workflow graph:**
+## How It Works
+
+A user fills in story details (characters, setting, moral, etc.) and the application orchestrates **five specialized AI agents** through a coordinated workflow to produce a fully illustrated children's storybook — complete with cover art, per-page illustrations, and narrative text — all streamed to the browser in real time.
 
 ```
-StoryRequest
-     ↓
 Orchestrator → StoryArchitect → ArtDirector → StoryReviewer → Decision
     ↑                                                             │
     └──────────── RevisionSignal (max 2 rounds) ─────────────────┘
-                                                                  │
-                                              yield_output → StoryResponse
 ```
 
-## Prerequisites
+## Quick Start
 
-- Python 3.11+
-- Node.js 18+
-- An **Azure AI Foundry** project with:
-  - A chat model deployment (e.g., `gpt-4o`)
-  - An image generation deployment (e.g., `dall-e-3`)
-- Azure CLI installed and logged in (`az login`) for `DefaultAzureCredential`
+1. **Set up prerequisites** — [Prerequisites & Environment Setup](docs/01-prerequisites-and-setup.md)
+2. **Understand the architecture** — [Architecture Overview](docs/02-architecture-overview.md)
+3. **Run the demo** — [Running the Demo](docs/03-running-the-demo.md)
 
-## Setup
+## Guides
 
-### 1. Backend
+These step-by-step walkthroughs guide you through extending the base application with new capabilities using **GitHub Copilot**. Each guide demonstrates a different pattern for expanding multi-agent workflows and integrating additional AI modalities.
 
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+| Guide | What You'll Build | Key Concepts |
+|---|---|---|
+| [Adding Activity Page Agents](docs/04-guide-activity-page-agents.md) | Look & Find activity page + Character Glossary page appended to the storybook | Fan-out / fan-in agent patterns, new agent creation, conditional workflow paths, UI extensions |
+| [Adding Text-to-Speech](docs/05-guide-tts.md) | Play button on each page that streams Azure AI Speech narration | Multi-modal AI (text → speech), new API endpoints, streaming audio, `DefaultAzureCredential` |
 
-cp .env.example .env
-# Edit .env and fill in your Azure AI Foundry values
-```
+> **Approach:** Each guide walks you through using GitHub Copilot in **Plan mode** (with Claude Opus, or your preferred model) to design the implementation, then **Agent mode** (with Claude Sonnet, or your preferred model) to execute it. The goal is to experience how an AI engineer would use Copilot to extend an existing agent-based application.
 
-### 2. Frontend
+## Reference Branches
 
-```bash
-cd frontend
-npm install
-```
+The following branches contain working implementations of the guided extensions. They exist as **backup references** — the intended workflow is to generate these features yourself using GitHub Copilot by following the guides above.
 
-## Running
-
-**Terminal 1 — Backend:**
-```bash
-cd backend
-source .venv/bin/activate
-uvicorn app.main:app --reload --port 8000
-```
-
-**Terminal 2 — Frontend:**
-```bash
-cd frontend
-npm run dev
-```
-
-Open **http://localhost:5173** in your browser.
-
-Or use the **"Full Stack"** compound launch configuration in VS Code (F5).
-
-## Environment Variables
-
-| Variable | Description |
+| Branch | Description |
 |---|---|
-| `FOUNDRY_PROJECT_ENDPOINT` | Azure AI Foundry project endpoint URL |
-| `FOUNDRY_MODEL_DEPLOYMENT_NAME` | Chat model deployment name (e.g., `gpt-4o`) |
-| `FOUNDRY_IMAGE_MODEL_DEPLOYMENT_NAME` | Image generation deployment (e.g., `dall-e-3`) |
-| `CORS_ORIGIN` | React dev server origin (default: `http://localhost:5173`) |
+| `activity-page-agents` | Look & Find + Character Glossary agents added to the workflow |
+| `story-tts` | Text-to-Speech narration on every story page |
+| `activity-page-agents-and-tts` | All features combined (activity pages + TTS) |
 
-## Agent Descriptions
+## Documentation
 
-| Agent | Role |
+| Document | Description |
 |---|---|
-| **OrchestratorAgent** | Transforms user input into a structured `StoryOutline` with character descriptions, page breakdowns, and the story arc. Handles revision requests from the reviewer. |
-| **StoryArchitectAgent** | Writes the full narrative text and DALL-E image prompts for every page based on the outline. Ensures age-appropriate vocabulary (5–8 years). |
-| **ArtDirectorAgent** | Calls the Azure OpenAI image generation API to produce one illustration per page. Embeds character descriptions for visual consistency. |
-| **StoryReviewerAgent** | Reviews the complete illustrated story for character consistency, narrative coherence, age-appropriateness, moral integration, and art-text alignment. |
-| **DecisionExecutor** | Routing logic — approves the story (yield output) or sends a `RevisionSignal` back to the Orchestrator (max 2 revision rounds). |
+| [Prerequisites & Environment Setup](docs/01-prerequisites-and-setup.md) | Tools, Azure resources, environment configuration, and local setup |
+| [Architecture Overview](docs/02-architecture-overview.md) | System design, agent descriptions, workflow graph, SSE streaming, and data flow |
+| [Running the Demo](docs/03-running-the-demo.md) | Step-by-step instructions for running the app and demo talking points |
+| [Guide: Activity Page Agents](docs/04-guide-activity-page-agents.md) | Extend the workflow with Look & Find and Character Glossary agents |
+| [Guide: Text-to-Speech](docs/05-guide-tts.md) | Add Azure AI Speech narration to every story page |
+
+## License
+
+This project is provided as an example for demonstration and experimentation purposes.
