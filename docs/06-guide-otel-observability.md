@@ -68,6 +68,8 @@ These traces are exported via the **OpenTelemetry Protocol (OTLP)** to the **.NE
 
 ---
 
+> NOTE: If you do not want to implement OTEL observability in the app manually, feel free to experiment with prompting GitHub Copilot to follow the documentation in this file to perform the implementation.
+
 ## Before You Start
 
 ### 1. Complete Base Prerequisites
