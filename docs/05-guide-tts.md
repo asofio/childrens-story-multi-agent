@@ -497,6 +497,7 @@ Ensure the voice is set to `en-US-Ava:DragonHDLatestNeural`. If a different voic
 ## Next Steps
 
 - If you haven't already, try the [Activity Page Agents guide](04-guide-activity-page-agents.md) to add Look & Find and Character Glossary pages.
+- Add [OpenTelemetry observability](06-guide-otel-observability.md) to trace the full agent workflow in the Aspire Dashboard.
 - Check out the `activity-page-agents-and-tts` branch to see both features working together.
 - Experiment further: try different neural voices, add a voice selector to the UI, or add TTS to the activity pages.
 
