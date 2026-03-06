@@ -6,7 +6,7 @@
 2. **Multi-Agent Orchestration Example** — A real-world reference implementation showing how to build agent workflows with Microsoft Agent Framework, including conditional branching, revision loops, and real-time progress streaming.
 3. **Customer Engineering Sandbox** — A well-structured starting point that customer engineers can clone, experiment with, and extend with new agents and multi-modal AI capabilities.
 
-![Children's Story Studio Demo](docs/storystudio.mp4)
+![Children's Story Studio Demo](docs/storystudio.gif)
 
 ## How It Works
 
