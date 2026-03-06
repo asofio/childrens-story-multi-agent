@@ -32,7 +32,8 @@ These step-by-step walkthroughs guide you through extending the base application
 |---|---|---|
 | [Adding Activity Page Agents](docs/04-guide-activity-page-agents.md) | Look & Find activity page + Character Glossary page appended to the storybook | Fan-out / fan-in agent patterns, new agent creation, conditional workflow paths, UI extensions |
 | [Adding Text-to-Speech](docs/05-guide-tts.md) | Play button on each page that streams Azure AI Speech narration | Multi-modal AI (text → speech), new API endpoints, streaming audio, `DefaultAzureCredential` |
-| [Adding OTEL Observability](docs/06-guide-otel-observability.md) | Distributed tracing across all agents, viewable in the Aspire Dashboard | OpenTelemetry, distributed tracing, OTLP export, .NET Aspire Dashboard, Application Insights |
+| [Adding OTEL Observability (AI Toolkit)](docs/06.a-guide-otel-observability-ai-toolkit.md) | Distributed tracing across all agents, viewable in VS Code via AI Toolkit | OpenTelemetry, distributed tracing, AI Toolkit trace viewer, prompt inspection |
+| [Adding OTEL Observability (Aspire)](docs/06.b-guide-otel-observability-aspire.md) | Distributed tracing across all agents, viewable in the Aspire Dashboard | OpenTelemetry, distributed tracing, OTLP export, .NET Aspire Dashboard, Application Insights |
 
 > **Approach:** Each guide walks you through using GitHub Copilot in **Plan mode** (with Claude Opus, or your preferred model) to design the implementation, then **Agent mode** (with Claude Sonnet, or your preferred model) to execute it. The goal is to experience how an AI engineer would use Copilot to extend an existing agent-based application.
 
@@ -55,7 +56,8 @@ The following branches contain working implementations of the guided extensions.
 | [Running the Demo](docs/03-running-the-demo.md) | Step-by-step instructions for running the app and demo talking points |
 | [Guide: Activity Page Agents](docs/04-guide-activity-page-agents.md) | Extend the workflow with Look & Find and Character Glossary agents |
 | [Guide: Text-to-Speech](docs/05-guide-tts.md) | Add Azure AI Speech narration to every story page |
-| [Guide: OTEL Observability](docs/06-guide-otel-observability.md) | Add OpenTelemetry distributed tracing with the Aspire Dashboard |
+| [Guide: OTEL Observability (AI Toolkit)](docs/06.a-guide-otel-observability-ai-toolkit.md) | Add OpenTelemetry tracing viewable in VS Code via AI Toolkit |
+| [Guide: OTEL Observability (Aspire)](docs/06.b-guide-otel-observability-aspire.md) | Add OpenTelemetry tracing viewable in the .NET Aspire Dashboard |
 
 ## License
 

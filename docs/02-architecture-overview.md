@@ -32,7 +32,7 @@ This document provides a deep dive into the system architecture, agent workflow,
 
 ## System Overview
 
-Children's Story Studio is a three-tier application:
+Children's Story Studio is a multi-tier application:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -105,12 +105,12 @@ The workflow is instantiated as a **module-level singleton** (`story_workflow`) 
 
 ### Agent Descriptions
 
-| Agent | Executor ID | LLM-Backed? | File | Role |
+| Agent | Executor ID | LLM Involved? | File | Role |
 |---|---|---|---|---|
-| **OrchestratorAgent** | `orchestrator` | Yes | `agents/orchestrator.py` | Transforms the user's `StoryRequest` into a structured `StoryOutline` with character descriptions, page breakdowns, and story arc. Has two handlers: one for the initial request and one for revision requests (triggered by `RevisionSignal`). Tracks revision count in shared state. |
-| **StoryArchitectAgent** | `story_architect` | Yes | `agents/story_architect.py` | Receives the `StoryOutline` and writes the full narrative text plus detailed DALL-E image prompts for every page. Produces a `StoryDraft`. Emits per-page `page_content` progress events. Ensures age-appropriate vocabulary (5–8 years). |
-| **ArtDirectorExecutor** | `art_director` | Yes (image) | `agents/art_director.py` | Receives the `StoryDraft` and generates illustrations using Azure OpenAI image generation. Creates: 1 cover image + N story page images + 1 "The End" image. Uses `asyncio.Semaphore(5)` for concurrent generation (max 5 parallel image requests). All images returned as base64 data URIs (1024×1024, PNG). |
-| **StoryReviewerAgent** | `story_reviewer` | Yes | `agents/story_reviewer.py` | Reviews the illustrated `StoryDraft` across 5 categories: character consistency, narrative coherence, age-appropriateness, moral integration, and art-text alignment. Produces a `ReviewResult` (approved/rejected + issues + revision instructions). |
+| **Orchestrator** | `orchestrator` | Yes | `agents/orchestrator.py` | Transforms the user's `StoryRequest` into a structured `StoryOutline` with character descriptions, page breakdowns, and story arc. Has two handlers: one for the initial request and one for revision requests (triggered by `RevisionSignal`). Tracks revision count in shared state. |
+| **StoryArchitect** | `story_architect` | Yes | `agents/story_architect.py` | Receives the `StoryOutline` and writes the full narrative text plus detailed DALL-E image prompts for every page. Produces a `StoryDraft`. Emits per-page `page_content` progress events. Ensures age-appropriate vocabulary (5–8 years). |
+| **ArtDirector** | `art_director` | Yes (image) | `agents/art_director.py` | Receives the `StoryDraft` and generates illustrations using Azure OpenAI image generation. Creates: 1 cover image + N story page images + 1 "The End" image. Uses `asyncio.Semaphore(5)` for concurrent generation (max 5 parallel image requests). All images returned as base64 data URIs (1024×1024, PNG). |
+| **StoryReviewer** | `story_reviewer` | Yes | `agents/story_reviewer.py` | Reviews the illustrated `StoryDraft` across 5 categories: character consistency, narrative coherence, age-appropriateness, moral integration, and art-text alignment. Produces a `ReviewResult` (approved/rejected + issues + revision instructions). |
 | **DecisionExecutor** | `decision` | No | `agents/decision.py` | Pure routing logic (no LLM calls). If the story is approved or the revision budget (max 2 rounds) is exhausted, assembles the final `StoryResponse` and yields it as output. Otherwise, sends a `RevisionSignal` back to the Orchestrator to trigger another round. |
 
 ### Workflow Graph
@@ -120,29 +120,29 @@ The workflow is instantiated as a **module-level singleton** (`story_workflow`) 
                               │
                               ▼
                     ┌─────────────────┐
-                    │   Orchestrator   │ ◄──── RevisionSignal (max 2 rounds)
+                    │   Orchestrator  │ ◄──── RevisionSignal (max 2 rounds)
                     └────────┬────────┘                    ▲
                              │ StoryOutline                │
                              ▼                             │
                     ┌─────────────────┐                    │
-                    │  StoryArchitect  │                    │
+                    │  StoryArchitect │                    │
                     └────────┬────────┘                    │
                              │ StoryDraft (text only)      │
                              ▼                             │
                     ┌─────────────────┐                    │
-                    │   ArtDirector    │                    │
+                    │   ArtDirector   │                    │
                     └────────┬────────┘                    │
                              │ StoryDraft (with images)    │
                              ▼                             │
                     ┌─────────────────┐                    │
-                    │  StoryReviewer   │  (skipped if      │
-                    │                  │   SKIP_STORY_      │
-                    │                  │   REVIEWER=true)   │
+                    │  StoryReviewer  │  (skipped if       │
+                    │                 │   SKIP_STORY_      │
+                    │                 │   REVIEWER=true)   │
                     └────────┬────────┘                    │
                              │ ReviewResult                │
                              ▼                             │
                     ┌─────────────────┐   if rejected      │
-                    │    Decision      │ ──────────────────┘
+                    │    Decision     │  ──────────────────┘
                     └────────┬────────┘
                              │ if approved or budget exhausted
                              ▼
