@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 from pydantic import BaseModel, Field
 
 
@@ -30,6 +30,17 @@ class StoryRequest(BaseModel):
     additional_details: Optional[str] = Field(
         default="Include a scene where the characters work together to solve a puzzle",
         description="Any additional plot details, themes, or scenes to include",
+    )
+    wikipedia_topic: Optional[str] = Field(
+        default=None,
+        description="Optional Wikipedia topic to base the story on (e.g. 'Marie Curie', 'Moon landing')",
+    )
+    wikipedia_mode: Literal["full", "influence"] = Field(
+        default="influence",
+        description=(
+            "'full' = Wikipedia controls the entire story; "
+            "'influence' = Wikipedia provides background context blended with the user's story parameters"
+        ),
     )
 
 

@@ -24,7 +24,7 @@ function resolveStepStatus(stepId, progress, details = []) {
   const stepDetails = details.filter(d => d.executor_id === stepId);
   if (stepDetails.length > 0) {
     const lastDetail = stepDetails.at(-1);
-    const activeTypes    = new Set(['executor_started', 'revision_started', 'prompt_sent', 'page_content', 'image_started', 'image_queued', 'images_batch_started']);
+    const activeTypes    = new Set(['executor_started', 'revision_started', 'prompt_sent', 'page_content', 'image_started', 'image_queued', 'images_batch_started', 'wikipedia_fetched', 'wikipedia_not_found']);
     const completedTypes = new Set(['response_received', 'image_completed', 'image_failed', 'auto_approved']);
     if (activeTypes.has(lastDetail.detail_type)) {
       return lastDetail.detail_type === 'revision_started' ? 'revision' : 'active';
@@ -113,16 +113,63 @@ function ResponseBlock({ data, executorId }) {
 
 function ExecutorStartedBlock({ data }) {
   if (!data) return null;
+  const isFullMode = data.wikipedia_mode === 'full';
   return (
     <div className={styles.responseBlock}>
       <div className={styles.detailLabel}>📥 Story request received</div>
-      <div className={styles.responseRow}><span className={styles.responseKey}>Hero</span><span>{data.main_character}</span></div>
-      {data.supporting_characters?.length > 0 && (
-        <div className={styles.responseRow}><span className={styles.responseKey}>Also</span><span>{data.supporting_characters.join(', ')}</span></div>
+      {isFullMode ? (
+        <div className={styles.responseRow}>
+          <span className={styles.responseKey}>Mode</span>
+          <span>📖 Full Wikipedia Story — characters, setting &amp; plot derived from article</span>
+        </div>
+      ) : (
+        <>
+          <div className={styles.responseRow}><span className={styles.responseKey}>Hero</span><span>{data.main_character}</span></div>
+          {data.supporting_characters?.length > 0 && (
+            <div className={styles.responseRow}><span className={styles.responseKey}>Also</span><span>{data.supporting_characters.join(', ')}</span></div>
+          )}
+          <div className={styles.responseRow}><span className={styles.responseKey}>Setting</span><span>{data.setting}</span></div>
+          <div className={styles.responseRow}><span className={styles.responseKey}>Moral</span><span>{data.moral}</span></div>
+          <div className={styles.responseRow}><span className={styles.responseKey}>Problem</span><span>{data.main_problem}</span></div>
+        </>
       )}
-      <div className={styles.responseRow}><span className={styles.responseKey}>Setting</span><span>{data.setting}</span></div>
-      <div className={styles.responseRow}><span className={styles.responseKey}>Moral</span><span>{data.moral}</span></div>
-      <div className={styles.responseRow}><span className={styles.responseKey}>Problem</span><span>{data.main_problem}</span></div>
+    </div>
+  );
+}
+
+function WikipediaFetchedBlock({ data }) {
+  if (!data) return null;
+  const isFullMode = data.mode === 'full';
+  return (
+    <div className={styles.responseBlock}>
+      <div className={styles.detailLabel}>🌐 Wikipedia content retrieved</div>
+      <div className={styles.responseRow}>
+        <span className={styles.responseKey}>Topic</span>
+        <span>{data.resolved_title}</span>
+      </div>
+      <div className={styles.responseRow}>
+        <span className={styles.responseKey}>Mode</span>
+        <span>{isFullMode
+          ? '📖 Full — story created entirely from Wikipedia'
+          : '✨ Influence — blended with your story details'}
+        </span>
+      </div>
+      <div className={styles.responseRow}>
+        <span className={styles.responseKey}>Content</span>
+        <span>{data.extract_length?.toLocaleString()} characters fetched</span>
+      </div>
+    </div>
+  );
+}
+
+function WikipediaNotFoundBlock({ data }) {
+  if (!data) return null;
+  return (
+    <div className={`${styles.responseBlock} ${styles.rejected}`}>
+      <div className={styles.detailLabel}>🌐 Wikipedia topic not found: &quot;{data.topic}&quot;</div>
+      <div className={styles.revisionInstructions}>
+        The story will be generated without Wikipedia content.
+      </div>
     </div>
   );
 }
@@ -292,11 +339,13 @@ function StepDetailPanel({ stepId, details }) {
   return (
     <div className={styles.stepDetail}>
       {rounds.map((round, roundIdx) => {
-        const promptEvt         = round.find(d => d.detail_type === 'prompt_sent');
+        const promptEvt          = round.find(d => d.detail_type === 'prompt_sent');
         const responseEvt        = round.find(d => d.detail_type === 'response_received');
         const autoApprovedEvt    = round.find(d => d.detail_type === 'auto_approved');
         const executorStartedEvt = round.find(d => d.detail_type === 'executor_started');
         const revisionStartedEvt = round.find(d => d.detail_type === 'revision_started');
+        const wikiFetchedEvt     = round.find(d => d.detail_type === 'wikipedia_fetched');
+        const wikiNotFoundEvt    = round.find(d => d.detail_type === 'wikipedia_not_found');
 
         // Deduplicate pages by page_number — last event wins
         const pageMap = {};
@@ -320,9 +369,11 @@ function StepDetailPanel({ stepId, details }) {
                 {roundIdx === 0 ? '— Initial pass' : `🔄 Revision ${roundIdx}`}
               </div>
             )}
-            {autoApprovedEvt  && <AutoApprovedBlock />}
-            {executorStartedEvt && <ExecutorStartedBlock data={executorStartedEvt.data} />}
-            {revisionStartedEvt && <RevisionStartedBlock data={revisionStartedEvt.data} />}
+            {autoApprovedEvt     && <AutoApprovedBlock />}
+            {executorStartedEvt  && <ExecutorStartedBlock data={executorStartedEvt.data} />}
+            {wikiFetchedEvt      && <WikipediaFetchedBlock data={wikiFetchedEvt.data} />}
+            {wikiNotFoundEvt     && <WikipediaNotFoundBlock data={wikiNotFoundEvt.data} />}
+            {revisionStartedEvt  && <RevisionStartedBlock data={revisionStartedEvt.data} />}
             {promptEvt   && <PromptBlock text={promptEvt.data?.prompt} />}
             {pageEvts.length  > 0 && <PageContentBlock pages={pageEvts} />}
             {imageEvts.length > 0 && <ImageGrid imageEvents={imageEvts} totalPages={totalPages} />}
