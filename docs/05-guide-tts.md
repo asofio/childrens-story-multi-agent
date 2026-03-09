@@ -497,7 +497,7 @@ Ensure the voice is set to `en-US-Ava:DragonHDLatestNeural`. If a different voic
 ## Next Steps
 
 - If you haven't already, try the [Activity Page Agents guide](04-guide-activity-page-agents.md) to add Look & Find and Character Glossary pages.
-- Add [OpenTelemetry observability](06.a-guide-otel-observability-ai-toolkit.md) to trace the full agent workflow in VS Code via AI Toolkit, or use the [Aspire Dashboard variant](06.b-guide-otel-observability-aspire.md) for a browser-based view.
+- Add [OpenTelemetry observability](07.a-guide-otel-observability-ai-toolkit.md) to trace the full agent workflow in VS Code via AI Toolkit, or use the [Aspire Dashboard variant](07.b-guide-otel-observability-aspire.md) for a browser-based view.
 - Experiment further: try different neural voices, add a voice selector to the UI, or add TTS to the activity pages.
 - Check out the `activity-page-agents-and-tts` branch to see pre-built functionality of the activity page, character glossary and tts features working together.
 

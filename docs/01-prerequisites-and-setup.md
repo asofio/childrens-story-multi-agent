@@ -62,7 +62,7 @@ The extension guides rely heavily on GitHub Copilot for code generation. You'll 
 
 The **AI Toolkit for VS Code** (published by Microsoft) provides AI-focused development capabilities that you'll use throughout these guides:
 
-- **Agent Trace Viewer** — View OpenTelemetry traces from your agent workflow directly in VS Code, including LLM call details, prompt/response inspection, and per-agent latency. Used in the [OTEL Observability guide (AI Toolkit variant)](06.a-guide-otel-observability-ai-toolkit.md).
+- **Agent Trace Viewer** — View OpenTelemetry traces from your agent workflow directly in VS Code, including LLM call details, prompt/response inspection, and per-agent latency. Used in the [OTEL Observability guide (AI Toolkit variant)](07.a-guide-otel-observability-ai-toolkit.md).
 - **Model Catalog** — Browse and compare available AI models from Azure AI Foundry without leaving your editor.
 - **Prompt Playground** — Test and iterate on system prompts before committing them into agent code — useful when designing new agents in the [Activity Page Agents guide](04-guide-activity-page-agents.md).
 
