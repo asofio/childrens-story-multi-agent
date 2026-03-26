@@ -143,3 +143,51 @@
   align-items: center;
   gap: 8px;
 }
+
+/* ─── Bonus content checkboxes ────────────────────────────────────────── */
+
+.checkboxGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  padding: 14px 16px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: border-color 0.18s, background 0.18s;
+}
+
+.checkboxLabel:hover {
+  border-color: var(--color-primary);
+  background: rgba(123, 92, 245, 0.04);
+}
+
+.checkboxInput {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  margin-top: 2px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.checkboxText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+.checkboxHint {
+  font-size: 0.83rem;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}

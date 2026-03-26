@@ -8,13 +8,14 @@ Endpoints:
 
 import logging
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette.sse import EventSourceResponse
 
 from .config import settings
 from .models import StoryRequest
 from .story_generator import StoryGenerator
+from .tts import TTSService, TTSRequest
 
 logging.basicConfig(
     level=logging.INFO,
@@ -63,3 +64,16 @@ async def generate_story(request: StoryRequest) -> EventSourceResponse:
     full illustrated StoryResponse.
     """
     return _story_generator.event_source_response(request)
+
+
+# ─── Text-to-Speech (TTS) ─────────────────────────────────────────────────────
+
+_tts = TTSService()
+
+@app.post("/api/tts")
+async def text_to_speech(req: TTSRequest):
+    """Synthesize speech and stream audio/mpeg chunks to the client."""
+    if not req.text or not req.text.strip():
+        raise HTTPException(status_code=400, detail="Text is required.")
+    _tts.validate_config()
+    return _tts.streaming_response(req.text.strip())

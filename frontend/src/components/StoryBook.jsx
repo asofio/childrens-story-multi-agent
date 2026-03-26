@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import styles from './StoryBook.module.css';
-import StoryPage, { CoverPage, FinalPage } from './StoryPage';
+import StoryPage, { CoverPage, FinalPage, LookAndFindPage, CharacterGlossaryPage } from './StoryPage';
 
 /**
  * StoryBook — An interactive page-by-page flipbook viewer.
@@ -8,25 +8,24 @@ import StoryPage, { CoverPage, FinalPage } from './StoryPage';
  * Page index layout:
  *   0           → CoverPage
  *   1 … n       → story pages (story.pages[0] … story.pages[n-1])
- *   n + 1       → FinalPage (moral summary)
+ *   n + 1       → FinalPage ("The End")
+ *   n + 2 …     → bonus pages (Look & Find, Character Glossary) if present
  */
 export default function StoryBook({ story, onReset }) {
   const total = story.pages?.length ?? 0;
-  // pageIndex 0 = cover, 1..total = story pages, total+1 = final
-  const maxPage = total + 1;
+
+  // Build the ordered list of bonus pages from story data
+  const bonusPages = [];
+  if (story.look_and_find)      bonusPages.push({ type: 'look_and_find',      label: '🔎 Look & Find',       data: story.look_and_find });
+  if (story.character_glossary) bonusPages.push({ type: 'character_glossary', label: '📖 Meet the Characters', data: story.character_glossary });
+
+  // pageIndex 0 = cover, 1..total = story pages, total+1 = final, total+2... = bonus
+  const maxPage = total + 1 + bonusPages.length;
   const [pageIndex, setPageIndex] = useState(0);
 
-  function prev() {
-    setPageIndex(i => Math.max(0, i - 1));
-  }
-
-  function next() {
-    setPageIndex(i => Math.min(maxPage, i + 1));
-  }
-
-  function goTo(idx) {
-    setPageIndex(idx);
-  }
+  function prev() { setPageIndex(i => Math.max(0, i - 1)); }
+  function next() { setPageIndex(i => Math.min(maxPage, i + 1)); }
+  function goTo(idx) { setPageIndex(idx); }
 
   const isFirst = pageIndex === 0;
   const isLast  = pageIndex === maxPage;
@@ -34,15 +33,26 @@ export default function StoryBook({ story, onReset }) {
   // ─── Render current page content ───────────────────────────────────────
 
   function renderPage() {
-    if (pageIndex === 0)        return <CoverPage story={story} />;
-    if (pageIndex === maxPage)  return <FinalPage story={story} />;
-    const storyPage = story.pages[pageIndex - 1];
-    return <StoryPage page={storyPage} totalPages={total} />;
+    if (pageIndex === 0)          return <CoverPage story={story} />;
+    if (pageIndex <= total)       return <StoryPage page={story.pages[pageIndex - 1]} totalPages={total} />;
+    if (pageIndex === total + 1)  return <FinalPage story={story} />;
+    const bonus = bonusPages[pageIndex - total - 2];
+    if (!bonus) return null;
+    if (bonus.type === 'look_and_find')      return <LookAndFindPage activity={bonus.data} />;
+    if (bonus.type === 'character_glossary') return <CharacterGlossaryPage glossary={bonus.data} />;
+    return null;
   }
 
-  // ─── Dots — one per actual story page + cover + final ──────────────────
+  function pageLabel() {
+    if (pageIndex === 0)         return 'Cover';
+    if (pageIndex === total + 1) return 'The End';
+    if (pageIndex > total + 1)   return bonusPages[pageIndex - total - 2]?.label ?? 'Bonus';
+    return `Page ${pageIndex} of ${total}`;
+  }
 
-  const dotCount = maxPage + 1; // cover + all pages + final
+  // ─── Dots — one per page including cover, story, final, and bonus ───────
+
+  const dotCount = maxPage + 1;
 
   return (
     <div className={styles.container}>
@@ -54,6 +64,7 @@ export default function StoryBook({ story, onReset }) {
           {story.revision_rounds === 0
             ? 'Approved on first draft!'
             : `${story.revision_rounds} revision round${story.revision_rounds > 1 ? 's' : ''}`}
+          {bonusPages.length > 0 && ` · ${bonusPages.length} bonus page${bonusPages.length > 1 ? 's' : ''}`}
         </p>
       </div>
 
@@ -89,13 +100,7 @@ export default function StoryBook({ story, onReset }) {
                 />
               ))}
             </div>
-            <span className={styles.pageCounter}>
-              {pageIndex === 0
-                ? 'Cover'
-                : pageIndex === maxPage
-                ? 'The End'
-                : `Page ${pageIndex} of ${total}`}
-            </span>
+            <span className={styles.pageCounter}>{pageLabel()}</span>
           </div>
 
           <button
@@ -118,3 +123,4 @@ export default function StoryBook({ story, onReset }) {
     </div>
   );
 }
+

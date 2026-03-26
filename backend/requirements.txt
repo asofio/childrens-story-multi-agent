@@ -17,3 +17,6 @@ agent-framework-azure-ai==1.0.0b260107
 # Note: agent-framework-core requires openai>=1.99.0
 azure-identity>=1.21.0
 openai>=1.99.0
+
+# Azure Speech SDK (TTS)
+azure-cognitiveservices-speech>=1.40.0
