@@ -91,6 +91,7 @@ function App() {
                 isCollapsed={!sidebarOpen}
                 onToggle={() => setSidebarOpen(o => !o)}
                 bonusAgents={bonusAgents}
+                reviewNotes={story.review_notes}
               />
             </aside>
 

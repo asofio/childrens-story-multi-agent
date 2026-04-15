@@ -247,21 +247,31 @@ function PageContentBlock({ pages }) {
 
 /* ─── Lightbox ────────────────────────────────────────────────────────────── */
 
-function Lightbox({ src, label, onClose }) {
-  if (!src) return null;
+function Lightbox({ images, currentIndex, onClose, onPrev, onNext }) {
+  if (!images?.length) return null;
+  const { src, label } = images[currentIndex];
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex < images.length - 1;
+
   return (
     <div className={styles.lightboxBackdrop} onClick={onClose}>
       <div className={styles.lightboxContent} onClick={e => e.stopPropagation()}>
         <button className={styles.lightboxClose} onClick={onClose} title="Close">✕</button>
+        {hasPrev && (
+          <button className={`${styles.lightboxNav} ${styles.lightboxNavPrev}`} onClick={onPrev} title="Previous image">‹</button>
+        )}
         <img src={src} alt={label} className={styles.lightboxImage} />
-        {label && <div className={styles.lightboxLabel}>{label}</div>}
+        {hasNext && (
+          <button className={`${styles.lightboxNav} ${styles.lightboxNavNext}`} onClick={onNext} title="Next image">›</button>
+        )}
+        {label && <div className={styles.lightboxLabel}>{label} ({currentIndex + 1}/{images.length})</div>}
       </div>
     </div>
   );
 }
 
 function ImageGrid({ imageEvents, totalPages }) {
-  const [lightbox, setLightbox] = useState(null); // { src, label }
+  const [lightboxIndex, setLightboxIndex] = useState(null);
 
   const imageMap = useMemo(() => {
     const map = {};
@@ -294,6 +304,14 @@ function ImageGrid({ imageEvents, totalPages }) {
     return `Page ${n}`;
   };
 
+  // Build ordered list of completed images for lightbox paging
+  const completedImages = useMemo(() =>
+    slots
+      .filter(pn => imageMap[pn]?.detail_type === 'image_completed' && imageMap[pn]?.data?.image_url)
+      .map(pn => ({ src: imageMap[pn].data.image_url, label: imageMap[pn].data?.label || slotLabel(pn), pageNum: pn })),
+    [imageMap, slots]
+  );
+
   const completedCount = Object.values(imageMap).filter(e => e.detail_type === 'image_completed').length;
   const activeCount = Object.values(imageMap).filter(e => e.detail_type === 'image_started').length;
 
@@ -319,7 +337,10 @@ function ImageGrid({ imageEvents, totalPages }) {
                   dt === 'image_started'  ? styles.imageSlotLoading :
                   dt === 'image_queued'   ? styles.imageSlotQueued : ''
                 } ${isClickable ? styles.imageSlotClickable : ''}`}
-                onClick={isClickable ? () => setLightbox({ src: ev.data.image_url, label }) : undefined}
+                onClick={isClickable ? () => {
+                  const idx = completedImages.findIndex(img => img.pageNum === pageNum);
+                  if (idx !== -1) setLightboxIndex(idx);
+                } : undefined}
                 title={isClickable ? `View ${label} full size` : undefined}
               >
                 {dt === 'image_completed' && ev.data?.image_url
@@ -339,8 +360,14 @@ function ImageGrid({ imageEvents, totalPages }) {
         </div>
       </div>
 
-      {lightbox && (
-        <Lightbox src={lightbox.src} label={lightbox.label} onClose={() => setLightbox(null)} />
+      {lightboxIndex != null && completedImages.length > 0 && (
+        <Lightbox
+          images={completedImages}
+          currentIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onPrev={() => setLightboxIndex(i => Math.max(0, i - 1))}
+          onNext={() => setLightboxIndex(i => Math.min(completedImages.length - 1, i + 1))}
+        />
       )}
     </>
   );
@@ -432,6 +459,7 @@ export default function ProgressTracker({
   isCollapsed = false,
   onToggle,
   bonusAgents = { lookAndFind: true, characterGlossary: true },
+  reviewNotes,
 }) {
   const revisionEvents = progress.filter(p => p.executor_id === 'revision');
   const isSidebar = mode === 'sidebar';
@@ -459,6 +487,13 @@ export default function ProgressTracker({
             <div className={styles.sidebarHeader}>
               <span className={styles.sidebarTitle}>⚙ Generation Log</span>
               <button className={styles.collapseBtn} onClick={onToggle} title="Hide log">✕</button>
+            </div>
+          )}
+
+          {/* Reviewer notes — shown in sidebar mode only */}
+          {isSidebar && reviewNotes && reviewNotes !== 'Story approved with no issues.' && (
+            <div className={styles.reviewBanner}>
+              📝 {reviewNotes}
             </div>
           )}
 

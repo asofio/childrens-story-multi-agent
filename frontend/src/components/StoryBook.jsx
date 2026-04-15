@@ -50,6 +50,13 @@ export default function StoryBook({ story, onReset }) {
     return `Page ${pageIndex} of ${total}`;
   }
 
+  function dotLabel(i) {
+    if (i === 0)          return 'Cover';
+    if (i <= total)       return `Page ${i}`;
+    if (i === total + 1)  return 'The End';
+    return bonusPages[i - total - 2]?.label ?? 'Bonus';
+  }
+
   // ─── Dots — one per page including cover, story, final, and bonus ───────
 
   const dotCount = maxPage + 1;
@@ -68,12 +75,6 @@ export default function StoryBook({ story, onReset }) {
         </p>
       </div>
 
-      {story.review_notes && story.review_notes !== 'Story approved with no issues.' && (
-        <div className={styles.reviewBanner}>
-          📝 {story.review_notes}
-        </div>
-      )}
-
       {/* Book */}
       <div className={styles.book}>
         {renderPage()}
@@ -91,14 +92,28 @@ export default function StoryBook({ story, onReset }) {
 
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <div className={styles.dots}>
-              {Array.from({ length: dotCount }).map((_, i) => (
-                <button
-                  key={i}
-                  className={[styles.dot, i === pageIndex ? styles.active : ''].join(' ')}
-                  onClick={() => goTo(i)}
-                  aria-label={`Go to page ${i}`}
-                />
-              ))}
+              {Array.from({ length: dotCount }).map((_, i) => {
+                const label = dotLabel(i);
+                const isSpecial = i === 0 || i > total;
+                const isStoryPage = i >= 1 && i <= total;
+                return (
+                  <button
+                    key={i}
+                    className={[
+                      styles.dot,
+                      i === pageIndex ? styles.active : '',
+                      isSpecial ? styles.dotLabeled : '',
+                      isStoryPage ? styles.dotNumbered : '',
+                    ].join(' ')}
+                    onClick={() => goTo(i)}
+                    aria-label={label}
+                    title={label}
+                  >
+                    {isSpecial && <span className={styles.dotLabelText}>{label}</span>}
+                    {isStoryPage && <span className={styles.dotNumber}>{i}</span>}
+                  </button>
+                );
+              })}
             </div>
             <span className={styles.pageCounter}>{pageLabel()}</span>
           </div>
