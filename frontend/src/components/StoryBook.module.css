@@ -28,19 +28,19 @@
 /* Revision / review notes banner */
 .reviewBanner {
   width: 100%;
-  background: #DFF7F4;
+  background: #E0EDF2;
   border: 2px solid var(--color-success);
   border-radius: var(--radius-md);
   padding: 12px 20px;
   font-size: 0.88rem;
-  color: #1a8a7a;
+  color: #3D7288;
 }
 
 /* ─── Page book ──────────────────────────────────────────────────────────── */
 
 .book {
   width: 100%;
-  max-width: 720px;
+  max-width: 880px;
   background: var(--color-surface);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
@@ -87,8 +87,12 @@
 /* Page dots */
 .dots {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  flex: 1;
+  padding: 0 8px;
 }
 
 .dot {
@@ -105,6 +109,52 @@
 .dot.active {
   background: var(--color-primary);
   transform: scale(1.3);
+}
+
+.dotLabeled {
+  width: auto;
+  height: auto;
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-border);
+}
+
+.dotLabeled.active {
+  background: var(--color-primary);
+  color: #fff;
+  transform: scale(1.05);
+}
+
+.dotLabelText {
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.dotNumbered {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  background: var(--color-border);
+}
+
+.dotNumbered.active {
+  background: var(--color-primary);
+  color: #fff;
+  transform: scale(1.15);
+}
+
+.dotNumber {
+  pointer-events: none;
+  line-height: 1;
 }
 
 /* ─── Page counter ───────────────────────────────────────────────────────── */

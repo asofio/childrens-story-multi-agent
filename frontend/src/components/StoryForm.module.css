@@ -60,7 +60,7 @@
 .input:focus,
 .textarea:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(123, 92, 245, 0.15);
+  box-shadow: 0 0 0 3px rgba(24, 61, 76, 0.15);
 }
 
 .textarea {
@@ -101,7 +101,7 @@
 }
 
 .btnRemove:hover {
-  background: #c94848;
+  background: #8B4040;
 }
 
 .btnAdd {
@@ -172,7 +172,7 @@
 
 .checkboxLabel:hover {
   border-color: var(--color-primary);
-  background: rgba(123, 92, 245, 0.04);
+  background: rgba(24, 61, 76, 0.04);
 }
 
 .checkboxInput {
@@ -235,8 +235,8 @@
 
 .modeCardSelected {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(123, 92, 245, 0.15);
-  background: rgba(123, 92, 245, 0.04);
+  box-shadow: 0 0 0 3px rgba(24, 61, 76, 0.15);
+  background: rgba(24, 61, 76, 0.04);
 }
 
 .modeRadio {

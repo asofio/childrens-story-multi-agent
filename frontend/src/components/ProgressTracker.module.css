@@ -51,7 +51,7 @@
 }
 
 .toggleTab:hover {
-  background: var(--color-primary-dark, #6A4CE0);
+  background: var(--color-primary-dark, #0A0C0C);
 }
 
 .toggleTabLabel {
@@ -172,18 +172,18 @@
 
 .step.active .icon {
   border-color: var(--color-primary);
-  background: #F6F2FF;
-  box-shadow: 0 0 0 4px rgba(123, 92, 245, 0.15);
+  background: #E0EDF2;
+  box-shadow: 0 0 0 4px rgba(24, 61, 76, 0.15);
 }
 
 .step.completed .icon {
   border-color: var(--color-success);
-  background: #DFF7F4;
+  background: #E0F2EC;
 }
 
 .step.revision .icon {
   border-color: var(--color-revision);
-  background: #F6F2FF;
+  background: #F0EEEB;
 }
 
 /* Text content area */
@@ -251,7 +251,7 @@
 /* ─── Prompt block ────────────────────────────────────────────────────────── */
 
 .promptBlock {
-  background: #F6F2FF;
+  background: #E0EDF2;
   border-left: 3px solid var(--color-primary);
   border-radius: 0 6px 6px 0;
   padding: 10px 12px;
@@ -263,7 +263,7 @@
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
-  color: #444;
+  color: #585751;
   margin: 6px 0 4px;
   max-height: 200px;
   overflow-y: auto;
@@ -286,7 +286,7 @@
 /* ─── Response block ──────────────────────────────────────────────────────── */
 
 .responseBlock {
-  background: #F6F2FF;
+  background: #E0EDF2;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 10px 12px;
@@ -296,13 +296,13 @@
 }
 
 .responseBlock.approved {
-  background: #DFF7F4;
-  border-color: #7adbc9;
+  background: #E0F2EC;
+  border-color: #97CCE3;
 }
 
 .responseBlock.rejected {
-  background: #FFF4F6;
-  border-color: #f5aaaa;
+  background: #F5EAEA;
+  border-color: #C88080;
 }
 
 .responseRow {
@@ -328,8 +328,8 @@
 }
 
 .issueCategory {
-  background: #FFE3EC;
-  color: #c4447a;
+  background: #D5E3EA;
+  color: #585751;
   font-size: 0.68rem;
   font-weight: 700;
   padding: 1px 6px;
@@ -368,7 +368,7 @@
   border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 10px 12px;
-  background: #FDFBFF;
+  background: #F8FBFC;
 }
 
 .pageCardHeader {
@@ -386,8 +386,8 @@
 
 .pageTone {
   font-size: 0.68rem;
-  background: #E8E1FF;
-  color: #7B5CF5;
+  background: #BBD5E1;
+  color: #183D4C;
   border-radius: 30px;
   padding: 1px 8px;
   font-weight: 600;
@@ -397,7 +397,7 @@
   font-size: 0.82rem;
   line-height: 1.55;
   font-style: italic;
-  color: #333;
+  color: #0A0C0C;
   margin: 0 0 6px;
 }
 
@@ -412,7 +412,7 @@
 
 .pageImagePrompt {
   font-size: 0.75rem;
-  color: #888;
+  color: #A6A49D;
   font-style: italic;
   margin: 0;
   line-height: 1.4;
@@ -437,7 +437,7 @@
   border-radius: 8px;
   overflow: hidden;
   aspect-ratio: 1 / 1;
-  background: #EFEAFD;
+  background: #E0EDF2;
   border: 2px solid var(--color-border);
   transition: border-color 0.25s, background 0.25s;
   display: flex;
@@ -447,23 +447,23 @@
 
 .imageSlotDone {
   border-color: var(--color-success);
-  background: #DFF7F4;
+  background: #E0F2EC;
 }
 
 .imageSlotFail {
   border-color: var(--color-error);
-  background: #fff0f0;
+  background: #F5EAEA;
 }
 
 .imageSlotLoading {
-  border-color: #FF8FAB;
-  background: #FFF4F6;
+  border-color: #97CCE3;
+  background: #EDF5F9;
   animation: pulse 1.4s ease-in-out infinite;
 }
 
 .imageSlotQueued {
-  border-color: #C4B5FD;
-  background: #EFEAFD;
+  border-color: #97CCE3;
+  background: #E0EDF2;
   opacity: 0.7;
 }
 
@@ -508,7 +508,7 @@
 .imageSlotPending {
   width: 100%;
   height: 100%;
-  background: #EFEAFD;
+  background: #E0EDF2;
 }
 
 .imageSlotQueuedIcon {
@@ -581,6 +581,37 @@
   background: rgba(255,255,255,0.3);
 }
 
+.lightboxNav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  font-size: 2rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  z-index: 10;
+}
+
+.lightboxNav:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+.lightboxNavPrev {
+  left: -64px;
+}
+
+.lightboxNavNext {
+  right: -64px;
+}
+
 .lightboxImage {
   max-width: 100%;
   max-height: calc(90vh - 60px);
@@ -603,9 +634,9 @@
   display: inline-block;
   font-size: 0.7rem;
   font-weight: 700;
-  background: #EFEAFD;
-  color: var(--color-revision, #7B5CF5);
-  border: 1px solid #c4b5fd;
+  background: #F0EEEB;
+  color: var(--color-revision, #585751);
+  border: 1px solid #A6A49D;
   border-radius: 20px;
   padding: 2px 9px;
   margin-left: 6px;
@@ -634,14 +665,14 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: var(--color-revision, #7c3aed);
+  color: var(--color-revision, #585751);
   margin-bottom: 2px;
 }
 
 /* ─── Error box ───────────────────────────────────────────────────────────── */
 
 .errorBox {
-  background: #fff0f0;
+  background: #F5EAEA;
   border: 2px solid var(--color-error);
   border-radius: var(--radius-md);
   padding: 20px 24px;

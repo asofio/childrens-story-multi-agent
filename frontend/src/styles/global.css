@@ -3,29 +3,29 @@
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  /* Palette */
-  --color-bg:              #FFF8E7;
+  /* Zava Brand Palette */
+  --color-bg:              #F0F3F5;
   --color-surface:         #FFFFFF;
-  --color-primary:         #7B5CF5;   /* whimsical purple */
-  --color-primary-hover:   #6A4CE0;
-  --color-primary-dark:    #6A4CE0;
-  --color-primary-light:   #E8E1FF;   /* soft lavender */
-  --color-secondary:       #FF8FAB;   /* strawberry pink */
-  --color-secondary-hover: #F76C94;
-  --color-accent:          #FFE3EC;   /* soft pink tint */
-  --color-bg-section:      #F6F2FF;   /* light lavender sections */
-  --color-text:            #2F2F3A;
-  --color-text-muted:      #6B6B6B;
-  --color-border:          #E8E1FF;   /* lavender border */
-  --color-divider:         #EFEAFD;
-  --color-success:         #2EC4B6;   /* mint aqua */
-  --color-success-check:   #28B89F;
-  --color-error:           #e05c5c;
-  --color-revision:        #7B5CF5;   /* same as primary */
+  --color-primary:         #183D4C;   /* deep muted blue */
+  --color-primary-hover:   #3D7288;   /* medium teal-blue */
+  --color-primary-dark:    #0A0C0C;   /* near-black */
+  --color-primary-light:   #E0EDF2;   /* soft blue tint */
+  --color-secondary:       #3D7288;   /* medium teal-blue */
+  --color-secondary-hover: #183D4C;
+  --color-accent:          #BBD5E1;   /* soft blue accent */
+  --color-bg-section:      #EAF0F4;   /* light blue-gray sections */
+  --color-text:            #0A0C0C;
+  --color-text-muted:      #696E6F;
+  --color-border:          #BBD5E1;   /* soft blue border */
+  --color-divider:         #D5E3EA;
+  --color-success:         #4A8F7F;   /* muted teal-green */
+  --color-success-check:   #3D7A6B;
+  --color-error:           #A05050;   /* muted red */
+  --color-revision:        #585751;   /* dark warm gray */
 
   /* Typography */
   --font-body:   'Nunito', 'Segoe UI', Arial, sans-serif;
-  --font-heading:'Fredoka One', 'Nunito', Arial, sans-serif;
+  --font-heading:'Nunito', 'Segoe UI', Arial, sans-serif;
 
   /* Spacing */
   --radius-sm: 8px;
@@ -34,9 +34,9 @@
   --radius-xl: 36px;
 
   /* Shadows */
-  --shadow-sm: 0 2px 8px rgba(123, 92, 245, 0.08);
-  --shadow-md: 0 4px 18px rgba(123, 92, 245, 0.10);
-  --shadow-lg: 0 8px 36px rgba(123, 92, 245, 0.14);
+  --shadow-sm: 0 2px 8px rgba(24, 61, 76, 0.08);
+  --shadow-md: 0 4px 18px rgba(24, 61, 76, 0.10);
+  --shadow-lg: 0 8px 36px rgba(24, 61, 76, 0.14);
 }
 
 * {
@@ -90,7 +90,7 @@ button {
 
 .app-header {
   flex-shrink: 0;
-  background: linear-gradient(135deg, #7B5CF5 0%, #FF8FAB 100%);
+  background: linear-gradient(135deg, #183D4C 0%, #3D7288 100%);
   color: white;
   padding: 16px 32px;
   display: flex;
@@ -180,7 +180,7 @@ button {
   transition: background 0.2s, padding-left 0.2s;
 }
 .sidebar-reopener:hover {
-  background: var(--color-primary-dark, #6A4CE0);
+  background: var(--color-primary-dark, #0A0C0C);
   padding-left: 12px;
 }
 
