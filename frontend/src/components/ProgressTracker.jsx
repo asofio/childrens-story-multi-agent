@@ -490,13 +490,6 @@ export default function ProgressTracker({
             </div>
           )}
 
-          {/* Reviewer notes — shown in sidebar mode only */}
-          {isSidebar && reviewNotes && reviewNotes !== 'Story approved with no issues.' && (
-            <div className={styles.reviewBanner}>
-              📝 {reviewNotes}
-            </div>
-          )}
-
           {/* Workflow steps */}
           <div className={styles.workflow}>
             {workflowSteps.map((step, idx) => {
@@ -541,6 +534,13 @@ export default function ProgressTracker({
               );
             })}
           </div>
+
+          {/* Reviewer notes — shown in sidebar mode after all steps */}
+          {isSidebar && reviewNotes && reviewNotes !== 'Story approved with no issues.' && (
+            <div className={styles.reviewBanner}>
+              📝 {reviewNotes}
+            </div>
+          )}
 
           {error && (
             <div className={styles.errorBox}>
