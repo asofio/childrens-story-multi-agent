@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import './styles/global.css';
 import logoSrc from './assets/logo.png';
+import brandSrc from './assets/image.png';
 import StoryForm from './components/StoryForm';
 import ProgressTracker from './components/ProgressTracker';
 import StoryBook from './components/StoryBook';
@@ -48,7 +49,7 @@ function App() {
       {/* ── Header ─────────────────────────────────────────────────── */}
       <header className="app-header">
         <img src={logoSrc} alt="Logo" className="header-icon" />
-        <h1>Zava Publishing - Children's Story Studio</h1>
+        <h1><img src={brandSrc} alt="Zava" className="header-brand" /> Publishing - Children's Story Studio</h1>
       </header>
 
       {/* ── Main content ───────────────────────────────────────────── */}
