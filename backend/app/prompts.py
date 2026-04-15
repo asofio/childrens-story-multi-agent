@@ -9,12 +9,13 @@ downstream agents.
 
 TARGET AUDIENCE: Children aged 5–8 years old.
 
-STORY STRUCTURE (6–8 pages):
+STORY STRUCTURE (8–10 pages):
   - Page 1: Introduction — introduce the main character, setting, and their world
   - Pages 2–3: Rising Action — present the main problem, characters try initial solutions
-  - Pages 4–5: Climax — the problem reaches its peak; the most exciting, tense moment
-  - Pages 6–7: Falling Action — characters work together to overcome the challenge
-  - Page 8 (or last page): Resolution & Moral — problem resolved, moral lesson clearly stated
+  - Pages 4–5: Development — deepen the conflict, introduce obstacles or new characters
+  - Pages 6–7: Climax — the problem reaches its peak; the most exciting, tense moment
+  - Pages 8–9: Falling Action — characters work together to overcome the challenge
+  - Page 10 (or last page): Resolution & Moral — problem resolved, moral lesson clearly stated
 
 REQUIREMENTS:
 1. Create a compelling, age-appropriate title.
@@ -32,7 +33,7 @@ REQUIREMENTS:
 OUTPUT FORMAT: Return a valid JSON object matching the StoryOutline schema:
 {
   "title": "...",
-  "target_pages": 7,
+  "target_pages": 9,
   "character_descriptions": {
     "Benny": "a small brown bunny with floppy ears and a bright blue scarf",
     "Rosie": "a clever red fox with a bushy tail and a green hat"
@@ -101,10 +102,15 @@ FOR EACH PAGE, you must also provide:
   expressions, lighting, background details. ENSURE that the description of the scene includes all relevant details
   to guarantee that the image generation agent can create an illustration that perfectly matches the narrative text and emotional tone.
 - image_prompt: A concise DALL-E style prompt for generating the illustration. ALWAYS begin
-  the prompt with the exact character descriptions from the outline (copy them verbatim),
+  the prompt with the exact character descriptions from the outline (copy them verbatim; ENSURE that the ONLY character descriptions included are the ones that are in this scene. DO NOT include characters that are not present on this page),
   then describe the scene. Use the style: "children's storybook illustration, watercolor style,
   warm colors, [character descriptions], [scene details]".  If the characters happen to be animals, you may also include instructions ensuring
   that they are anatomically correct in each image.
+  CRITICAL — every image_prompt MUST end with this exact negative constraint (fill in the
+  character name(s) for that page): "Only [name(s)] should appear as prominent characters in
+  this image. Do NOT include any other people, animals, or prominent creatures — no bystanders,
+  background figures, or unnamed characters. Small, insignificant background creatures such as
+  butterflies, birds, insects, or fish are acceptable as ambient scenery."
 
 OUTPUT FORMAT: Return a valid JSON object matching the StoryDraft schema:
 {
@@ -160,6 +166,11 @@ REVIEW CHECKLIST:
    - Are character names spelled the same way on every page?
    - Do the character descriptions in the image prompts match the outline's descriptions?
    - Are there any characters who appear or disappear without explanation?
+   - Does each image_prompt reference ONLY characters from the canonical character_descriptions
+     provided as prominent figures? Flag any image_prompt that describes or implies a prominent
+     human being, animal, or creature not listed in character_descriptions. Small, insignificant
+     background creatures (butterflies, birds, insects, fish, etc.) used as ambient scenery are
+     acceptable and should NOT be flagged.
 
 2. NARRATIVE COHERENCE
    - Does the story flow logically from page to page?
@@ -170,7 +181,10 @@ REVIEW CHECKLIST:
 3. AGE APPROPRIATENESS (target: 5–8 years)
    - Is the vocabulary suitable? (No overly complex words without context)
    - Is the sentence length appropriate? (Short, clear sentences)
-   - Is the content free of anything frightening, violent, or inappropriate?
+   - Mild tension, suspense, and age-appropriate "scary" moments (e.g. a dark cave,
+     a thunderstorm, a character feeling lost) are perfectly fine and even encouraged —
+     they make stories exciting! Only flag content that is genuinely violent, graphic,
+     or likely to cause nightmares in young children.
 
 4. MORAL INTEGRATION
    - Is the moral woven naturally into the story?
@@ -179,7 +193,13 @@ REVIEW CHECKLIST:
 
 5. ART-TEXT ALIGNMENT
    - Does each page's image_prompt match the narrative text on that page?
-   - Are the characters in the images consistent with those mentioned in the text?
+   - Are the characters listed in characters_present EXACTLY the prominent characters described
+     in the image_prompt — no more, no less? Flag any image_prompt that introduces a prominent
+     person, animal, or creature not present in that page's characters_present list. Small,
+     insignificant background creatures (butterflies, birds, insects, fish, etc.) used as
+     ambient scenery do NOT count as characters and should NOT be flagged.
+   - Does each image_prompt contain descriptions of ONLY characters from the canonical
+     character_descriptions as prominent figures? Minor ambient wildlife is acceptable.
    - Does the emotional tone of the image prompt match the text?
 
 OUTPUT FORMAT: Return a valid JSON object:
