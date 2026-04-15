@@ -9,6 +9,16 @@
   color: var(--color-primary);
   margin-bottom: 6px;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.titleIcon {
+  height: 2rem;
+  width: auto;
+  object-fit: contain;
 }
 
 .subtitle {

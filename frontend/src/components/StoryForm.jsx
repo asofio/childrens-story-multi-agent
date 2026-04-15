@@ -14,7 +14,7 @@ const DEFAULT_FORM = {
   include_character_glossary: true,
 };
 
-export default function StoryForm({ onSubmit, isGenerating }) {
+export default function StoryForm({ onSubmit, isGenerating, logoSrc }) {
   const [form, setForm] = useState(DEFAULT_FORM);
 
   const hasWikiTopic = form.wikipedia_topic.trim().length > 0;
@@ -68,7 +68,10 @@ export default function StoryForm({ onSubmit, isGenerating }) {
 
   return (
     <div className={styles.container}>
-      <h2 className={styles.title}>✨ Create a Children's Story</h2>
+      <h2 className={styles.title}>
+        {logoSrc && <img src={logoSrc} alt="" className={styles.titleIcon} />}
+        Create a Children's Story
+      </h2>
       <p className={styles.subtitle}>
         Fill in the details below and let the AI agents craft a magical illustrated story!
       </p>

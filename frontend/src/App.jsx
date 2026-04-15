@@ -48,7 +48,6 @@ function App() {
     <>
       {/* ── Header ─────────────────────────────────────────────────── */}
       <header className="app-header">
-        <img src={logoSrc} alt="Logo" className="header-icon" />
         <h1><img src={brandSrc} alt="Zava" className="header-brand" /> Publishing - Children's Story Studio</h1>
       </header>
 
@@ -57,7 +56,7 @@ function App() {
 
         {view === 'form' && (
           <div className="card">
-            <StoryForm onSubmit={handleSubmit} isGenerating={isGenerating} />
+            <StoryForm onSubmit={handleSubmit} isGenerating={isGenerating} logoSrc={logoSrc} />
           </div>
         )}
 
