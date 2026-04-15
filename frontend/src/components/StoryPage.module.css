@@ -11,7 +11,6 @@
 .imageWrapper {
   width: 100%;
   aspect-ratio: 1 / 1;
-  max-height: 720px;
   background: linear-gradient(135deg, #BBD5E1 0%, #97CCE3 100%);
   overflow: hidden;
   position: relative;
