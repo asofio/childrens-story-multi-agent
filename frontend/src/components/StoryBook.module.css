@@ -40,7 +40,7 @@
 
 .book {
   width: 100%;
-  max-width: 1080px;
+  max-width: 760px;
   background: var(--color-surface);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
