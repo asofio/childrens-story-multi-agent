@@ -3,18 +3,20 @@ import './styles/global.css';
 import logoSrc from './assets/logo.png';
 import brandSrc from './assets/image.png';
 import StoryForm from './components/StoryForm';
+import StoryGallery from './components/StoryGallery';
 import ProgressTracker from './components/ProgressTracker';
 import StoryBook from './components/StoryBook';
 import { useStoryGeneration } from './hooks/useStoryGeneration';
 
 /**
  * View states:
- *   "form"        — initial input form
+ *   "form"        — initial input form (tabbed: create / saved stories)
  *   "generating"  — workflow is running; showing progress tracker
  *   "storybook"   — finished; split layout: tracker sidebar + storybook
  */
 function App() {
   const [view, setView] = useState('form');
+  const [formTab, setFormTab] = useState('create'); // 'create' | 'saved'
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [bonusAgents, setBonusAgents] = useState({ lookAndFind: true, characterGlossary: true });
 
@@ -86,7 +88,28 @@ function App() {
 
         {view === 'form' && (
           <div className="card">
-            <StoryForm onSubmit={handleSubmit} isGenerating={isGenerating} logoSrc={logoSrc} onLoadDemo={handleLoadDemo} />
+            <div className="tab-bar">
+              <button
+                className={`tab-btn${formTab === 'create' ? ' tab-btn--active' : ''}`}
+                onClick={() => setFormTab('create')}
+              >
+                ✏️ Create Story
+              </button>
+              <button
+                className={`tab-btn${formTab === 'saved' ? ' tab-btn--active' : ''}`}
+                onClick={() => setFormTab('saved')}
+              >
+                📚 Saved Stories
+              </button>
+            </div>
+
+            {formTab === 'create' && (
+              <StoryForm onSubmit={handleSubmit} isGenerating={isGenerating} logoSrc={logoSrc} />
+            )}
+
+            {formTab === 'saved' && (
+              <StoryGallery onLoadStory={handleLoadDemo} />
+            )}
           </div>
         )}
 
