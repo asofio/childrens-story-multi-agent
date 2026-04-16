@@ -4,12 +4,19 @@ main.py — FastAPI application entry point.
 Endpoints:
   GET  /api/health              — health check
   POST /api/generate-story      — runs the story workflow; streams SSE progress events
+  GET  /api/sample-stories      — list saved story snapshots
+  GET  /api/sample-stories/{id} — load a full story snapshot
+  POST /api/sample-stories      — save a story snapshot
 """
 
+import json
 import logging
+import re
+from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette.sse import EventSourceResponse
 
@@ -87,3 +94,48 @@ async def text_to_speech(req: TTSRequest):
         raise HTTPException(status_code=400, detail="Text is required.")
     _tts.validate_config()
     return _tts.streaming_response(req.text.strip())
+
+
+# ─── Demo Stories ─────────────────────────────────────────────────────────────
+
+from .demo_stories import list_demo_stories, get_demo_story, get_demo_image_path, save_demo_story  # noqa: E402
+from fastapi.responses import FileResponse  # noqa: E402
+
+
+@app.get("/api/demo-stories")
+async def demo_stories_list() -> list:
+    """Return metadata for all available demo stories."""
+    return list_demo_stories()
+
+
+@app.get("/api/demo-stories/{story_id}")
+async def demo_story_detail(story_id: str) -> dict:
+    """Return the full story + events for a single demo story."""
+    data = get_demo_story(story_id)
+    if data is None:
+        raise HTTPException(status_code=404, detail=f"Demo story '{story_id}' not found.")
+    return data
+
+
+@app.get("/api/demo-stories/{story_id}/images/{filename}")
+async def demo_story_image(story_id: str, filename: str):
+    """Serve a local image file for a demo story."""
+    path = get_demo_image_path(story_id, filename)
+    if path is None:
+        raise HTTPException(status_code=404, detail="Image not found.")
+    return FileResponse(str(path))
+
+
+@app.post("/api/demo-stories")
+async def save_demo_story_endpoint(request: dict):
+    """Save a story snapshot as a new demo story.
+
+    Expects JSON with: meta {id?, title, description, moral}, story, events.
+    Images are extracted from base64 data URIs and saved as separate files.
+    """
+    try:
+        story_id = save_demo_story(request)
+        return {"status": "ok", "id": story_id}
+    except Exception as e:
+        logger.exception("Failed to save demo story")
+        raise HTTPException(status_code=500, detail=str(e))

@@ -18,7 +18,7 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [bonusAgents, setBonusAgents] = useState({ lookAndFind: true, characterGlossary: true });
 
-  const { story, progress, details, isGenerating, error, generate, reset } =
+  const { story, progress, details, isGenerating, error, generate, reset, loadDemoStory } =
     useStoryGeneration();
 
   // Transition to the storybook view once the story is ready
@@ -44,6 +44,36 @@ function App() {
     setBonusAgents({ lookAndFind: true, characterGlossary: true });
   }
 
+  async function handleLoadDemo(storyId) {
+    setSidebarOpen(true);
+    await loadDemoStory(storyId);
+    setView('storybook');
+  }
+
+  async function handleSaveStory() {
+    if (!story) return;
+    // Assemble the progress/detail events into the format expected by the backend
+    const events = [
+      ...progress.map(p => ({ type: 'progress', data: p })),
+      ...details.map(d => ({ type: 'detail', data: d })),
+    ];
+    const payload = {
+      meta: {
+        title: story.title,
+        description: story.moral_summary,
+        moral: story.moral_summary,
+      },
+      story,
+      events,
+    };
+    const res = await fetch('/api/demo-stories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`Save failed (${res.status})`);
+  }
+
   return (
     <>
       {/* ── Header ─────────────────────────────────────────────────── */}
@@ -56,7 +86,7 @@ function App() {
 
         {view === 'form' && (
           <div className="card">
-            <StoryForm onSubmit={handleSubmit} isGenerating={isGenerating} logoSrc={logoSrc} />
+            <StoryForm onSubmit={handleSubmit} isGenerating={isGenerating} logoSrc={logoSrc} onLoadDemo={handleLoadDemo} />
           </div>
         )}
 
@@ -107,7 +137,7 @@ function App() {
                   📋
                 </button>
               )}
-              <StoryBook story={story} onReset={handleReset} />
+              <StoryBook story={story} onReset={handleReset} onSave={handleSaveStory} />
             </div>
           </>
         )}

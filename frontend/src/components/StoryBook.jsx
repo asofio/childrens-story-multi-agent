@@ -11,7 +11,7 @@ import StoryPage, { CoverPage, FinalPage, LookAndFindPage, CharacterGlossaryPage
  *   n + 1       → FinalPage ("The End")
  *   n + 2 …     → bonus pages (Look & Find, Character Glossary) if present
  */
-export default function StoryBook({ story, onReset }) {
+export default function StoryBook({ story, onReset, onSave }) {
   const total = story.pages?.length ?? 0;
 
   // Build the ordered list of bonus pages from story data
@@ -22,6 +22,7 @@ export default function StoryBook({ story, onReset }) {
   // pageIndex 0 = cover, 1..total = story pages, total+1 = final, total+2... = bonus
   const maxPage = total + 1 + bonusPages.length;
   const [pageIndex, setPageIndex] = useState(0);
+  const [saveStatus, setSaveStatus] = useState(null); // null | 'saving' | 'saved' | 'error'
 
   function prev() { setPageIndex(i => Math.max(0, i - 1)); }
   function next() { setPageIndex(i => Math.min(maxPage, i + 1)); }
@@ -131,6 +132,28 @@ export default function StoryBook({ story, onReset }) {
 
       {/* Actions */}
       <div className={styles.actions}>
+        {onSave && (
+          <button
+            className="btn-secondary"
+            onClick={async () => {
+              setSaveStatus('saving');
+              try {
+                await onSave();
+                setSaveStatus('saved');
+                setTimeout(() => setSaveStatus(null), 3000);
+              } catch {
+                setSaveStatus('error');
+                setTimeout(() => setSaveStatus(null), 3000);
+              }
+            }}
+            disabled={saveStatus === 'saving'}
+          >
+            {saveStatus === 'saving' ? 'Saving…' :
+             saveStatus === 'saved'  ? '✓ Saved!' :
+             saveStatus === 'error'  ? 'Save Failed' :
+             '💾 Save Story'}
+          </button>
+        )}
         <button className="btn-secondary" onClick={onReset}>
           ✨ Create Another Story
         </button>
