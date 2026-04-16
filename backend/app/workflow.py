@@ -21,7 +21,7 @@ Base graph topology (always present):
    └────────┬────────┘                                     │
             │ StoryDraft (with image_url)                  │
             ▼                                              │
-   [StoryReviewer?]  ← conditional edge; skipped when skip_story_reviewer=true
+   [StoryReviewer?]  ← conditional edge; runs when enable_story_reviewer=true
             │ ReviewResult                                 │
             ▼                                              │
    ┌─────────────────┐                                     │
@@ -68,7 +68,7 @@ def build_story_workflow(request: StoryRequest) -> Workflow:
     Build and return a Workflow for the given request.
 
     The graph topology varies per-request based on flags in StoryRequest
-    (skip_story_reviewer, include_look_and_find, include_character_glossary).
+    (enable_story_reviewer, include_look_and_find, include_character_glossary).
 
     Args:
         request: The story generation request containing all user options.
@@ -95,8 +95,8 @@ def build_story_workflow(request: StoryRequest) -> Workflow:
 
     # ── Conditional edge function for the story reviewer ─────────────────
     def should_review(msg: object) -> bool:
-        """Route to the story reviewer when it hasn't been skipped."""
-        return not request.skip_story_reviewer
+        """Route to the story reviewer when it is enabled."""
+        return request.enable_story_reviewer
 
     # ── Story reviewer (conditional edges) ────────────────────────────────
     # Both edges are always present in the graph; at runtime only one fires.

@@ -54,9 +54,9 @@ class StoryRequest(BaseModel):
     )
 
     # Workflow control
-    skip_story_reviewer: bool = Field(
-        default=False,
-        description="When True, skips the story reviewer agent — faster generation but no quality review or revision loop",
+    enable_story_reviewer: bool = Field(
+        default=True,
+        description="When True, runs the story reviewer agent for quality review and potential revision loops",
     )
 
 

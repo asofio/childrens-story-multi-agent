@@ -96,7 +96,7 @@ A single `StoryGenerator` instance is created at module level and shared across 
 The workflow is built using `WorkflowBuilder` from Microsoft Agent Framework. It defines:
 
 - **Linear edges:** Orchestrator → StoryArchitect → ArtDirector
-- **Conditional edges:** ArtDirector routes to StoryReviewer or directly to Decision based on the `skip_story_reviewer` flag in the request (controlled via a checkbox on the story creation form).
+- **Conditional edges:** ArtDirector routes to StoryReviewer or directly to Decision based on the `enable_story_reviewer` flag in the request (controlled via a checkbox on the story creation form).
 - **Back-edge (revision loop):** Decision → Orchestrator via `RevisionSignal`
 - **Terminal:** Decision calls `ctx.yield_output()` when the story is approved or the revision budget is exhausted.
 - **Max iterations:** 30 (set on the workflow builder to allow for revision loops)

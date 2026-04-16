@@ -66,6 +66,22 @@ class StoryArchitectExecutor(Executor):
         raw_json = extract_json_from_response(result.text)
         draft = StoryDraft.model_validate_json(raw_json)
 
+        # Belt-and-suspenders: append a hard negative constraint to every image prompt so
+        # DALL-E cannot render characters who are not present on this page, regardless of
+        # whether the LLM faithfully followed the system-prompt instructions.
+        for page in draft.pages:
+            if page.characters_present:
+                present_details = "; ".join(
+                    f"{name} ({outline.character_descriptions.get(name, name)})"
+                    for name in page.characters_present
+                )
+                page.image_prompt = (
+                    page.image_prompt.rstrip(" .")
+                    + f". ONLY the following character(s) must appear in this image: {present_details}."
+                    " Do NOT include any other people, animals, or living creatures of any kind."
+                    " No bystanders, background figures, or unnamed characters."
+                )
+
         # Emit each page as it's parsed so the frontend can show content streaming in
         for page in draft.pages:
             await ctx.add_event(ProgressDetailEvent(

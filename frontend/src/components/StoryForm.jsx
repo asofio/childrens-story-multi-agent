@@ -12,7 +12,7 @@ const DEFAULT_FORM = {
   additional_details:         '',
   include_look_and_find:      true,
   include_character_glossary: true,
-  skip_story_reviewer:        false,
+  enable_story_reviewer:      true,
 };
 
 export default function StoryForm({ onSubmit, isGenerating, logoSrc }) {
@@ -308,12 +308,12 @@ export default function StoryForm({ onSubmit, isGenerating, logoSrc }) {
             <input
               type="checkbox"
               className={styles.checkboxInput}
-              checked={form.skip_story_reviewer}
-              onChange={e => setForm(prev => ({ ...prev, skip_story_reviewer: e.target.checked }))}
+              checked={form.enable_story_reviewer}
+              onChange={e => setForm(prev => ({ ...prev, enable_story_reviewer: e.target.checked }))}
             />
             <span className={styles.checkboxText}>
-              <strong>⏩ Skip Story Reviewer</strong>
-              <span className={styles.checkboxHint}>Skips the quality review step — faster generation but no revision loop</span>
+              <strong>Enable Story Reviewer</strong>
+              <span className={styles.checkboxHint}>Runs a quality review step with potential revision loops — produces higher quality but takes longer</span>
             </span>
           </label>
         </div>

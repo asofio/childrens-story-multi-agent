@@ -8,14 +8,15 @@ Endpoints:
 
 import logging
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette.sse import EventSourceResponse
 
-from .config import settings
-from .models import StoryRequest
-from .story_generator import StoryGenerator
-from .tts import TTSService, TTSRequest
+load_dotenv()  # Agent Framework reads env vars directly — ensure .env is loaded early
+
+from .config import settings  # noqa: E402
+from .models import StoryRequest  # noqa: E402
 
 logging.basicConfig(
     level=logging.INFO,
@@ -42,7 +43,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ─── Telemetry (must be configured BEFORE importing StoryGenerator) ───────────
+
+from .telemetry import configure_telemetry  # noqa: E402
+
+configure_telemetry(app)
+
 # ─── Service instances ────────────────────────────────────────────────────────
+
+from .story_generator import StoryGenerator  # noqa: E402
+from .tts import TTSService, TTSRequest  # noqa: E402
 
 _story_generator = StoryGenerator()
 

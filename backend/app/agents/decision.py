@@ -38,7 +38,7 @@ class DecisionExecutor(Executor):
         draft: StoryDraft,
         ctx: WorkflowContext[StoryResponse],
     ) -> None:
-        """Auto-approve path used when skip_story_reviewer is enabled."""
+        """Auto-approve path used when the story reviewer is disabled."""
         logger.info(
             "[Decision] Story reviewer skipped — auto-approving '%s'.",
             draft.title,
