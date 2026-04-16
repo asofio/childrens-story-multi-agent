@@ -53,6 +53,12 @@ class StoryRequest(BaseModel):
         description="When True, generates a Character Glossary page at the end of the book",
     )
 
+    # Workflow control
+    skip_story_reviewer: bool = Field(
+        default=False,
+        description="When True, skips the story reviewer agent — faster generation but no quality review or revision loop",
+    )
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Intermediate workflow data models
@@ -68,7 +74,7 @@ class PageOutline(BaseModel):
 
 class StoryOutline(BaseModel):
     title: str
-    target_pages: int = Field(ge=6, le=8)
+    target_pages: int = Field(ge=8, le=10)
     # Maps character name → detailed visual description for image consistency
     character_descriptions: dict[str, str]
     plot_summary: str

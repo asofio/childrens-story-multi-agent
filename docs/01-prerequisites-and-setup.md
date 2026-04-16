@@ -217,7 +217,6 @@ Open `backend/.env` in your editor and configure the following variables:
 | `FOUNDRY_PROJECT_ENDPOINT` | **Yes** | `""` | Your Azure AI Foundry project endpoint URL |
 | `FOUNDRY_MODEL_DEPLOYMENT_NAME` | No | `gpt-5.2` | The name of your chat model deployment |
 | `FOUNDRY_IMAGE_MODEL_DEPLOYMENT_NAME` | No | `gpt-image-1.5` | The name of your image generation model deployment |
-| `SKIP_STORY_REVIEWER` | No | `false` | Set to `true` to bypass the StoryReviewer agent (faster generation, useful for demos) |
 | `CORS_ORIGIN` | No | `http://localhost:5173` | The frontend's origin URL for CORS |
 
 #### TTS Variables (Only for [TTS Guide](05-guide-tts.md))
@@ -237,7 +236,6 @@ FOUNDRY_MODEL_DEPLOYMENT_NAME=gpt-5.2
 FOUNDRY_IMAGE_MODEL_DEPLOYMENT_NAME=gpt-image-1.5
 
 # Application settings
-SKIP_STORY_REVIEWER=false
 CORS_ORIGIN=http://localhost:5173
 
 # Azure AI Speech (only needed for TTS functionality)

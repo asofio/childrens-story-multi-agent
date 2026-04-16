@@ -108,11 +108,8 @@ class StoryGenerator:
             active_executor: str | None = None
 
             # Build a fresh workflow for this request — the graph topology depends
-            # on which bonus agents the user requested.
-            workflow = build_story_workflow(
-                include_look_and_find=request.include_look_and_find,
-                include_character_glossary=request.include_character_glossary,
-            )
+            # on which options the user selected (bonus agents, skip reviewer, etc.).
+            workflow = build_story_workflow(request)
 
             async for event in workflow.run_stream(request):
 

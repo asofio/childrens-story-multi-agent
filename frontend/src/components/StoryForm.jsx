@@ -12,6 +12,7 @@ const DEFAULT_FORM = {
   additional_details:         '',
   include_look_and_find:      true,
   include_character_glossary: true,
+  skip_story_reviewer:        false,
 };
 
 export default function StoryForm({ onSubmit, isGenerating, logoSrc }) {
@@ -295,6 +296,24 @@ export default function StoryForm({ onSubmit, isGenerating, logoSrc }) {
             <span className={styles.checkboxText}>
               <strong>📖 Generate Character Glossary</strong>
               <span className={styles.checkboxHint}>Adds a "Meet the Characters" page with fun descriptions of each character</span>
+            </span>
+          </label>
+        </div>
+
+        {/* ── Advanced Options ──────────────────────────────────────── */}
+        <div className={styles.sectionTitle}>⚙️ Advanced Options</div>
+
+        <div className={styles.checkboxGroup}>
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              className={styles.checkboxInput}
+              checked={form.skip_story_reviewer}
+              onChange={e => setForm(prev => ({ ...prev, skip_story_reviewer: e.target.checked }))}
+            />
+            <span className={styles.checkboxText}>
+              <strong>⏩ Skip Story Reviewer</strong>
+              <span className={styles.checkboxHint}>Skips the quality review step — faster generation but no revision loop</span>
             </span>
           </label>
         </div>

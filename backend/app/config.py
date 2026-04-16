@@ -18,11 +18,11 @@ class Settings(BaseSettings):
     azure_speech_resource_id: str = ""   # /subscriptions/.../resourceGroups/.../providers/Microsoft.CognitiveServices/accounts/<name>
     azure_speech_endpoint: str = ""       # optional custom endpoint override
 
-    # Feature flags
-    skip_story_reviewer: bool = False  # set to True to auto-approve every story (skips LLM review)
-
     # CORS origin for the React dev server
     cors_origin: str = "http://localhost:5173"
+
+    # OpenTelemetry — master switch (set to False to disable without removing env vars)
+    otel_enabled: bool = True
 
 
 settings = Settings()

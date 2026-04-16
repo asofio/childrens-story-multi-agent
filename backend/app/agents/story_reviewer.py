@@ -6,6 +6,7 @@ quality review, producing a ReviewResult that the DecisionExecutor uses
 to either approve or request revisions.
 """
 
+import json
 import logging
 
 from agent_framework import ChatAgent, Executor, WorkflowContext, handler
@@ -52,24 +53,18 @@ class StoryReviewerExecutor(Executor):
             len(draft.pages),
         )
 
-        if settings.skip_story_reviewer:
-            logger.info("[StoryReviewer] SKIP_STORY_REVIEWER=true — auto-approving story.")
-            review = ReviewResult(approved=True, issues=[], revision_instructions="")
-            await ctx.add_event(ProgressDetailEvent(
-                executor_id="story_reviewer",
-                detail_type="response_received",
-                detail_data={
-                    "approved": True,
-                    "issue_count": 0,
-                    "issues": [],
-                    "revision_instructions": "",
-                    "skipped": True,
-                },
-            ))
-            await ctx.send_message(review)
-            return
+        # Retrieve the canonical character list from shared state so the reviewer can
+        # cross-check every image_prompt against the officially defined characters.
+        character_descriptions: dict[str, str] = {}
+        outline_json = await ctx.get_shared_state("outline")
+        if outline_json:
+            try:
+                outline_data = json.loads(outline_json)
+                character_descriptions = outline_data.get("character_descriptions", {})
+            except Exception:
+                pass  # graceful degradation — review still proceeds without it
 
-        prompt = self._build_review_prompt(draft)
+        prompt = self._build_review_prompt(draft, character_descriptions)
 
         await ctx.add_event(ProgressDetailEvent(
             executor_id="story_reviewer",
@@ -111,7 +106,11 @@ class StoryReviewerExecutor(Executor):
 
     # ─── Internal helpers ─────────────────────────────────────────────────────
 
-    def _build_review_prompt(self, draft: StoryDraft) -> str:
+    def _build_review_prompt(
+        self,
+        draft: StoryDraft,
+        character_descriptions: dict[str, str] | None = None,
+    ) -> str:
         pages_summary = "\n\n".join(
             (
                 f"--- PAGE {p.page_number} ---\n"
@@ -124,6 +123,21 @@ class StoryReviewerExecutor(Executor):
             for p in draft.pages
         )
 
+        char_desc_section = ""
+        if character_descriptions:
+            char_lines = "\n".join(
+                f"  - {name}: {desc}"
+                for name, desc in character_descriptions.items()
+            )
+            char_desc_section = (
+                "\nCANONICAL CHARACTER DESCRIPTIONS "
+                "(the ONLY characters that should ever appear in any image prompt):\n"
+                + char_lines
+                + "\n\nFor every page, verify that the image_prompt describes ONLY characters"
+                " listed above. Any person, animal, or creature not in this list must be flagged"
+                " as a character_consistency / art_text_alignment error."
+            )
+
         return "\n".join([
             f"Please review this complete children's story titled '{draft.title}'.",
             "",
@@ -131,6 +145,7 @@ class StoryReviewerExecutor(Executor):
             pages_summary,
             "",
             f"MORAL SUMMARY (final page closing): {draft.moral_summary}",
+            char_desc_section,
             "",
             (
                 "Return a ReviewResult JSON object with: approved (bool), "

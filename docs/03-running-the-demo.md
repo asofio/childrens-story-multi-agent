@@ -166,7 +166,7 @@ Use these talking points when presenting to customers:
 
 5. **Have the code open** — For technical audiences, keep `workflow.py` open in a VS Code tab so you can show how the agent graph is defined. The code is clean and self-explanatory.
 
-6. **Consider using `SKIP_STORY_REVIEWER=true`** — This cuts generation time significantly by skipping the review and potential revision loops. Set this in your `.env` for time-constrained demos (see [Feature Flags](#feature-flags-for-demos) below).
+6. **Consider checking "Skip Story Reviewer"** — The story creation form includes this option under Advanced Options. It cuts generation time significantly by skipping the review and potential revision loops — useful for time-constrained demos.
 
 7. **Use a reliable network** — The application makes multiple calls to Azure AI services. A stable connection ensures a smooth experience.
 
@@ -174,14 +174,9 @@ Use these talking points when presenting to customers:
 
 ---
 
-## Feature Flags for Demos
+## Skip Story Reviewer
 
-| Environment Variable | Value | Effect |
-|---|---|---|
-| `SKIP_STORY_REVIEWER` | `true` | Bypasses the StoryReviewer agent — story goes directly from ArtDirector to Decision (auto-approved). Faster but no quality review. |
-| `SKIP_STORY_REVIEWER` | `false` (default) | Full pipeline with review and potential revision loops. More impressive for showcasing the complete workflow. |
-
-Edit `backend/.env` and restart the backend to change this setting.
+The story creation form includes a **"Skip Story Reviewer"** checkbox under **Advanced Options**. When checked, the story goes directly from ArtDirector to Decision (auto-approved) — faster generation but no quality review or revision loops. Uncheck it for the full pipeline, which is more impressive for showcasing the complete workflow.
 
 ---
 

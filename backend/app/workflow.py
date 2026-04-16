@@ -21,7 +21,7 @@ Base graph topology (always present):
    └────────┬────────┘                                     │
             │ StoryDraft (with image_url)                  │
             ▼                                              │
-   [StoryReviewer?]  ← skipped when SKIP_STORY_REVIEWER=true
+   [StoryReviewer?]  ← conditional edge; skipped when skip_story_reviewer=true
             │ ReviewResult                                 │
             ▼                                              │
    ┌─────────────────┐                                     │
@@ -51,7 +51,7 @@ based on the flags in StoryRequest. There is no module-level singleton.
 
 from agent_framework import WorkflowBuilder, Workflow
 
-from .config import settings
+from .models import StoryRequest
 from .agents.orchestrator import OrchestratorExecutor
 from .agents.story_architect import StoryArchitectExecutor
 from .agents.art_director import ArtDirectorExecutor
@@ -63,16 +63,15 @@ from .agents.character_glossary import CharacterGlossaryExecutor
 from .agents.final_assembly import FinalAssemblyExecutor
 
 
-def build_story_workflow(
-    include_look_and_find: bool = False,
-    include_character_glossary: bool = False,
-) -> Workflow:
+def build_story_workflow(request: StoryRequest) -> Workflow:
     """
-    Build and return a Workflow for the given request flags.
+    Build and return a Workflow for the given request.
+
+    The graph topology varies per-request based on flags in StoryRequest
+    (skip_story_reviewer, include_look_and_find, include_character_glossary).
 
     Args:
-        include_look_and_find:     Wire the LookAndFindActivityExecutor as a bonus agent.
-        include_character_glossary: Wire the CharacterGlossaryExecutor as a bonus agent.
+        request: The story generation request containing all user options.
 
     Returns:
         An immutable Workflow ready to call with workflow.run_stream(story_request).
@@ -94,17 +93,19 @@ def build_story_workflow(
         .add_edge(story_architect, art_director)
     )
 
-    # ── Optional story reviewer ────────────────────────────────────────────
-    if settings.skip_story_reviewer:
-        # ArtDirector output (StoryDraft) goes directly to Decision,
-        # which auto-approves via its handle_illustrated_draft handler.
-        builder = builder.add_edge(art_director, decision)
-    else:
-        builder = (
-            builder
-            .add_edge(art_director, story_reviewer)
-            .add_edge(story_reviewer, decision)
-        )
+    # ── Conditional edge function for the story reviewer ─────────────────
+    def should_review(msg: object) -> bool:
+        """Route to the story reviewer when it hasn't been skipped."""
+        return not request.skip_story_reviewer
+
+    # ── Story reviewer (conditional edges) ────────────────────────────────
+    # Both edges are always present in the graph; at runtime only one fires.
+    builder = (
+        builder
+        .add_edge(art_director, story_reviewer, condition=should_review)
+        .add_edge(art_director, decision, condition=lambda msg: not should_review(msg))
+        .add_edge(story_reviewer, decision)
+    )
 
     # ── Revision back-edge (always present) ───────────────────────────────
     # When Decision rejects the story, it sends a RevisionSignal back to
@@ -121,7 +122,7 @@ def build_story_workflow(
     builder = builder.add_edge(decision, approval_gateway)
 
     # ── Bonus agent fan-out / fan-in ───────────────────────────────────────
-    if include_look_and_find and include_character_glossary:
+    if request.include_look_and_find and request.include_character_glossary:
         # Both agents enabled — true parallel fan-out / fan-in
         look_and_find      = LookAndFindActivityExecutor()
         character_glossary = CharacterGlossaryExecutor()
@@ -131,7 +132,7 @@ def build_story_workflow(
             .add_fan_in_edges([look_and_find, character_glossary], final_assembly)
         )
 
-    elif include_look_and_find:
+    elif request.include_look_and_find:
         look_and_find = LookAndFindActivityExecutor()
         builder = (
             builder
@@ -139,7 +140,7 @@ def build_story_workflow(
             .add_edge(look_and_find, final_assembly)
         )
 
-    elif include_character_glossary:
+    elif request.include_character_glossary:
         character_glossary = CharacterGlossaryExecutor()
         builder = (
             builder
