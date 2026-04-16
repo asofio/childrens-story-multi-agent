@@ -80,7 +80,7 @@ function App() {
     <>
       {/* ── Header ─────────────────────────────────────────────────── */}
       <header className="app-header">
-        <h1><img src={brandSrc} alt="Zava" className="header-brand" /> Publishing - Children's Story Studio</h1>
+        <h1 onClick={handleReset} style={{ cursor: 'pointer' }}><img src={brandSrc} alt="Zava" className="header-brand" /> Publishing - Children's Story Studio</h1>
       </header>
 
       {/* ── Main content ───────────────────────────────────────────── */}
