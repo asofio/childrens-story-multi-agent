@@ -107,10 +107,10 @@ FOR EACH PAGE, you must also provide:
   warm colors, [character descriptions], [scene details]".  If the characters happen to be animals, you may also include instructions ensuring
   that they are anatomically correct in each image.
   CRITICAL — every image_prompt MUST end with this exact negative constraint (fill in the
-  character name(s) for that page): "Only [name(s)] should appear as prominent characters in
-  this image. Do NOT include any other people, animals, or prominent creatures — no bystanders,
-  background figures, or unnamed characters. Small, insignificant background creatures such as
-  butterflies, birds, insects, or fish are acceptable as ambient scenery."
+  character name(s) for that page): "Only [name(s)] should appear as prominent, named characters
+  in this image. Anonymous background figures (crowds, townspeople, soldiers, passersby, etc.)
+  are acceptable when the narrative describes them, but they should remain small, non-detailed,
+  and clearly secondary to the named characters."
 
 OUTPUT FORMAT: Return a valid JSON object matching the StoryDraft schema:
 {
@@ -167,10 +167,12 @@ REVIEW CHECKLIST:
    - Do the character descriptions in the image prompts match the outline's descriptions?
    - Are there any characters who appear or disappear without explanation?
    - Does each image_prompt reference ONLY characters from the canonical character_descriptions
-     provided as prominent figures? Flag any image_prompt that describes or implies a prominent
-     human being, animal, or creature not listed in character_descriptions. Small, insignificant
-     background creatures (butterflies, birds, insects, fish, etc.) used as ambient scenery are
-     acceptable and should NOT be flagged.
+     as prominent, named figures? Flag any image_prompt that gives a prominent role to a
+     named character not listed in character_descriptions. However, anonymous background
+     figures (crowds, townspeople, soldiers, neighbors, celebrating people, etc.) are perfectly
+     acceptable when the narrative describes them and should NOT be flagged. The key distinction
+     is: unnamed background people in a scene are fine; a new named or prominently featured
+     character who isn't in the character list is not.
 
 2. NARRATIVE COHERENCE
    - Does the story flow logically from page to page?
@@ -193,13 +195,14 @@ REVIEW CHECKLIST:
 
 5. ART-TEXT ALIGNMENT
    - Does each page's image_prompt match the narrative text on that page?
-   - Are the characters listed in characters_present EXACTLY the prominent characters described
-     in the image_prompt — no more, no less? Flag any image_prompt that introduces a prominent
-     person, animal, or creature not present in that page's characters_present list. Small,
-     insignificant background creatures (butterflies, birds, insects, fish, etc.) used as
-     ambient scenery do NOT count as characters and should NOT be flagged.
-   - Does each image_prompt contain descriptions of ONLY characters from the canonical
-     character_descriptions as prominent figures? Minor ambient wildlife is acceptable.
+   - Are the named characters listed in characters_present the prominent characters described
+     in the image_prompt? Flag any image_prompt that gives a prominent role to a named character
+     not in that page's characters_present list. Anonymous background figures (crowds, towns-
+     people, soldiers, celebrating neighbors, etc.) described in the narrative text are expected
+     in the illustration and should NOT be flagged as mismatches.
+   - It is normal and expected for the narrative text to describe scenes with unnamed people
+     (e.g. "the town celebrated," "neighbors gathered," "soldiers marched by") that the image
+     prompt may also include as background figures. This is NOT a text-art mismatch.
    - Does the emotional tone of the image prompt match the text?
 
 OUTPUT FORMAT: Return a valid JSON object:
