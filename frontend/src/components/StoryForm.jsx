@@ -2,8 +2,6 @@ import { useState } from 'react';
 import styles from './StoryForm.module.css';
 
 const DEFAULT_FORM = {
-  wikipedia_topic:            '',
-  wikipedia_mode:             'influence',
   main_character:             'Thomas the Turtle',
   supporting_characters:      ['Oliver the Wise Owl', 'Benny the Bunny'],
   setting:                    'A magical forest',
@@ -15,9 +13,6 @@ const DEFAULT_FORM = {
 
 export default function StoryForm({ onSubmit, isGenerating, logoSrc }) {
   const [form, setForm] = useState(DEFAULT_FORM);
-
-  const hasWikiTopic = form.wikipedia_topic.trim().length > 0;
-  const isFullMode   = hasWikiTopic && form.wikipedia_mode === 'full';
 
   // ─── Field handlers ────────────────────────────────────────────────────────
 
@@ -55,11 +50,6 @@ export default function StoryForm({ onSubmit, isGenerating, logoSrc }) {
       ...form,
       supporting_characters: form.supporting_characters.filter(s => s.trim() !== ''),
     };
-    // Only send wikipedia fields when a topic is actually provided
-    if (!hasWikiTopic) {
-      delete payload.wikipedia_topic;
-      delete payload.wikipedia_mode;
-    }
     onSubmit(payload);
   }
 
@@ -77,80 +67,14 @@ export default function StoryForm({ onSubmit, isGenerating, logoSrc }) {
 
       <form onSubmit={handleSubmit}>
 
-        {/* ── Wikipedia RAG section ─────────────────────────────────── */}
-        <div className={styles.sectionTitle}>🌐 Wikipedia Topic (optional)</div>
-
-        <div className={styles.field}>
-          <label className={styles.label}>Real-world Topic</label>
-          <input
-            className={styles.input}
-            type="text"
-            placeholder="e.g. Marie Curie, Moon landing, Photosynthesis"
-            value={form.wikipedia_topic}
-            onChange={handleField('wikipedia_topic')}
-          />
-          <p className={styles.hint}>
-            Enter a topic and we'll pull real facts from Wikipedia to create or inspire the story.
-          </p>
-        </div>
-
-        <div className={styles.field}>
-          <label className={`${styles.label} ${!hasWikiTopic ? styles.labelDisabled : ''}`}>How should Wikipedia content be used?</label>
-          <div className={`${styles.modeCards} ${!hasWikiTopic ? styles.modeCardsDisabled : ''}`}>
-
-              <label className={`${styles.modeCard} ${form.wikipedia_mode === 'full' && hasWikiTopic ? styles.modeCardSelected : ''}`}>
-                <input
-                  type="radio"
-                  name="wikipedia_mode"
-                  value="full"
-                  checked={form.wikipedia_mode === 'full'}
-                  onChange={handleField('wikipedia_mode')}
-                  className={styles.modeRadio}
-                />
-                <span className={styles.modeIcon}>📖</span>
-                <span className={styles.modeLabel}>Full Wikipedia Story</span>
-                <span className={styles.modeDesc}>
-                  The AI creates the <strong>entire story</strong> — characters, setting, moral,
-                  and plot — from the Wikipedia article. The fields below will be ignored.
-                </span>
-              </label>
-
-              <label className={`${styles.modeCard} ${form.wikipedia_mode === 'influence' && hasWikiTopic ? styles.modeCardSelected : ''}`}>
-                <input
-                  type="radio"
-                  name="wikipedia_mode"
-                  value="influence"
-                  checked={form.wikipedia_mode === 'influence'}
-                  onChange={handleField('wikipedia_mode')}
-                  className={styles.modeRadio}
-                />
-                <span className={styles.modeIcon}>✨</span>
-                <span className={styles.modeLabel}>Wikipedia-Influenced Story</span>
-                <span className={styles.modeDesc}>
-                  Your characters, setting, and moral are kept — Wikipedia facts are woven in
-                  as <strong>background inspiration</strong>.
-                </span>
-              </label>
-
-          </div>
-        </div>
-
-        <hr className={styles.divider} />
-
         {/* ── Main characters section ───────────────────────────────── */}
-        <div className={`${styles.sectionTitle} ${isFullMode ? styles.sectionDisabled : ''}`}>🐰 Characters</div>
+        <div className={styles.sectionTitle}>🐰 Characters</div>
 
-        {isFullMode && (
-          <p className={styles.disabledNotice}>
-            Not used in Full Wikipedia Story mode — the AI will create characters from the article.
-          </p>
-        )}
-
-        <fieldset disabled={isFullMode} className={styles.fieldset}>
+        <fieldset className={styles.fieldset}>
 
           <div className={styles.field}>
             <label className={styles.label}>
-              Main Character Name {!isFullMode && <span className={styles.required}>*</span>}
+              Main Character Name <span className={styles.required}>*</span>
             </label>
             <input
               className={styles.input}
@@ -158,7 +82,7 @@ export default function StoryForm({ onSubmit, isGenerating, logoSrc }) {
               placeholder="e.g. Benny the Brave Bunny"
               value={form.main_character}
               onChange={handleField('main_character')}
-              required={!isFullMode}
+              required
             />
           </div>
 
@@ -195,19 +119,13 @@ export default function StoryForm({ onSubmit, isGenerating, logoSrc }) {
         <hr className={styles.divider} />
 
         {/* ── World & story section ─────────────────────────────────── */}
-        <div className={`${styles.sectionTitle} ${isFullMode ? styles.sectionDisabled : ''}`}>🌿 The World & Story</div>
+        <div className={styles.sectionTitle}>🌿 The World & Story</div>
 
-        {isFullMode && (
-          <p className={styles.disabledNotice}>
-            Not used in Full Wikipedia Story mode — the AI will derive setting, moral, and plot from the article.
-          </p>
-        )}
-
-        <fieldset disabled={isFullMode} className={styles.fieldset}>
+        <fieldset className={styles.fieldset}>
 
           <div className={styles.field}>
             <label className={styles.label}>
-              Setting {!isFullMode && <span className={styles.required}>*</span>}
+              Setting <span className={styles.required}>*</span>
             </label>
             <input
               className={styles.input}
@@ -215,13 +133,13 @@ export default function StoryForm({ onSubmit, isGenerating, logoSrc }) {
               placeholder="e.g. A magical forest with talking trees and glowing fireflies"
               value={form.setting}
               onChange={handleField('setting')}
-              required={!isFullMode}
+              required
             />
           </div>
 
           <div className={styles.field}>
             <label className={styles.label}>
-              Moral of the Story {!isFullMode && <span className={styles.required}>*</span>}
+              Moral of the Story <span className={styles.required}>*</span>
             </label>
             <input
               className={styles.input}
@@ -229,20 +147,20 @@ export default function StoryForm({ onSubmit, isGenerating, logoSrc }) {
               placeholder="e.g. True courage means helping others even when you're scared"
               value={form.moral}
               onChange={handleField('moral')}
-              required={!isFullMode}
+              required
             />
           </div>
 
           <div className={styles.field}>
             <label className={styles.label}>
-              Main Problem / Central Challenge {!isFullMode && <span className={styles.required}>*</span>}
+              Main Problem / Central Challenge <span className={styles.required}>*</span>
             </label>
             <textarea
               className={styles.textarea}
               placeholder="e.g. A mysterious fog has covered the forest, and the animals can't find their way home"
               value={form.main_problem}
               onChange={handleField('main_problem')}
-              required={!isFullMode}
+              required
             />
           </div>
 
@@ -251,9 +169,9 @@ export default function StoryForm({ onSubmit, isGenerating, logoSrc }) {
         <hr className={styles.divider} />
 
         {/* ── Additional details ────────────────────────────────────── */}
-        <div className={`${styles.sectionTitle} ${isFullMode ? styles.sectionDisabled : ''}`}>✏️ Additional Details (optional)</div>
+        <div className={styles.sectionTitle}>✏️ Additional Details (optional)</div>
 
-        <fieldset disabled={isFullMode} className={styles.fieldset}>
+        <fieldset className={styles.fieldset}>
           <div className={styles.field}>
             <label className={styles.label}>Extra Details, Scenes, or Themes</label>
             <textarea
