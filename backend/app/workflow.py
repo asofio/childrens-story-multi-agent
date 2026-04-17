@@ -91,8 +91,5 @@ def build_story_workflow(request: StoryRequest) -> Workflow:
     # only traversed for RevisionSignal messages.
     builder = builder.add_edge(decision, orchestrator)
 
-    # ── Decision is the terminal node ─────────────────────────────────────
-    builder = builder.with_output_from(decision)
-
     return builder.build()
 
