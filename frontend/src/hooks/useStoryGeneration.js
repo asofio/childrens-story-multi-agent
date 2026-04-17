@@ -121,7 +121,40 @@ export function useStoryGeneration() {
     setError(null);
   }, [cancel]);
 
-  return { story, progress, details, isGenerating, error, generate, cancel, reset };
+  /**
+   * Load a pre-captured demo story by its ID.
+   * Fetches /api/demo-stories/{storyId} and populates state directly —
+   * no SSE stream, no isGenerating flag.
+   */
+  const loadDemoStory = useCallback(async (storyId) => {
+    setError(null);
+    try {
+      const res = await fetch(`/api/demo-stories/${encodeURIComponent(storyId)}`);
+      if (!res.ok) {
+        throw new Error(`Failed to load demo story (${res.status})`);
+      }
+      const { story: demoStory, events } = await res.json();
+
+      // Replay events into progress / details state
+      const progressEntries = [];
+      const detailEntries   = [];
+      for (const evt of (events || [])) {
+        if (evt.type === 'progress') {
+          progressEntries.push({ ...evt.data, timestamp: Date.now() });
+        } else if (evt.type === 'detail') {
+          detailEntries.push({ ...evt.data, timestamp: Date.now() });
+        }
+      }
+
+      setProgress(progressEntries);
+      setDetails(detailEntries);
+      setStory(demoStory);
+    } catch (err) {
+      setError(err.message || 'Failed to load demo story.');
+    }
+  }, []);
+
+  return { story, progress, details, isGenerating, error, generate, cancel, reset, loadDemoStory };
 }
 
 // ─── SSE payload handler ──────────────────────────────────────────────────────

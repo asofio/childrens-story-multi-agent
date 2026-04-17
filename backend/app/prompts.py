@@ -108,7 +108,9 @@ FOR EACH PAGE, you must also provide:
   that they are anatomically correct in each image.
   CRITICAL — every image_prompt MUST end with this exact negative constraint (fill in the
   character name(s) for that page): "Only [name(s)] should appear as prominent, named characters
-  in this image. Anonymous background figures (crowds, townspeople, soldiers, passersby, etc.)
+  in this image. Do not include any other animals or living creatures in the scene — only
+  the characters listed in character_descriptions may appear as animals or creatures.
+  Anonymous background figures (crowds, townspeople, soldiers, passersby, etc.)
   are acceptable when the narrative describes them, but they should remain small, non-detailed,
   and clearly secondary to the named characters."
 
@@ -198,10 +200,10 @@ REVIEW CHECKLIST:
    - Are the named characters listed in characters_present the prominent characters described
      in the image_prompt? Flag any image_prompt that gives a prominent role to a named character
      not in that page's characters_present list. Anonymous background figures (crowds, towns-
-     people, soldiers, celebrating neighbors, etc.) described in the narrative text are expected
+     people, celebrating neighbors, etc.) described in the narrative text are expected
      in the illustration and should NOT be flagged as mismatches.
    - It is normal and expected for the narrative text to describe scenes with unnamed people
-     (e.g. "the town celebrated," "neighbors gathered," "soldiers marched by") that the image
+     (e.g. "the town celebrated," "neighbors gathered,") that the image
      prompt may also include as background figures. This is NOT a text-art mismatch.
    - Does the emotional tone of the image prompt match the text?
 
