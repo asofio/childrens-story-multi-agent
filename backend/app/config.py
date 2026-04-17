@@ -16,8 +16,5 @@ class Settings(BaseSettings):
     # CORS origin for the React dev server
     cors_origin: str = "http://localhost:5173"
 
-    # OpenTelemetry — master switch (set to False to disable without removing env vars)
-    otel_enabled: bool = True
-
 
 settings = Settings()

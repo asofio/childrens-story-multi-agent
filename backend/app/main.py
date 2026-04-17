@@ -50,12 +50,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ─── Telemetry (must be configured BEFORE importing StoryGenerator) ───────────
-
-from .telemetry import configure_telemetry  # noqa: E402
-
-configure_telemetry(app)
-
 # ─── Service instances ────────────────────────────────────────────────────────
 
 from .story_generator import StoryGenerator  # noqa: E402
